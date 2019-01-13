@@ -36,6 +36,7 @@
 # - https://github.com/mnot/cdn-tests
 
 import logging
+import os
 import socket
 import time
 from typing import Tuple, Union, Dict
@@ -46,6 +47,7 @@ import tornado.iostream
 import tornado.web
 import tornado.httpclient
 import tornado.httputil
+import traceback
 from recordclass import RecordClass
 
 from riptide.config.document.project import Project
@@ -54,6 +56,7 @@ from riptide.config.loader import load_projects, load_config
 
 logger = logging.getLogger('tornado_proxy')
 # TODO: Autostop
+# TODO: SSL
 
 logger.setLevel(logging.DEBUG)
 
@@ -113,20 +116,20 @@ class ProxyHandler(tornado.web.RequestHandler):
                             self.pp_no_main_service(project)
                             return
                     else:
-                        self.pp_service_not_found(project, resolved_service_name)
+                        self.pp_service_not_found(project, request_service_name)
                         return
                 # Resolve address and proxy the request
                 address = self.resolve_container_address(project, resolved_service_name)
                 if address:
                     await self.reverse_proxy(project, resolved_service_name, address)
                 elif self.config["autostart"]:
-                    self.pp_start_project(project)
+                    self.pp_start_project(project, resolved_service_name)
                 else:
-                    self.pp_project_not_started(project)
+                    self.pp_project_not_started(project, resolved_service_name)
             else:
                 self.pp_project_not_found(project_name)
         except Exception as err:
-            self.pp_500(project_name, request_service_name, err)
+            self.pp_500(project_name, request_service_name, err, traceback.format_exc())
             return
 
     async def post(self):
@@ -259,7 +262,7 @@ class ProxyHandler(tornado.web.RequestHandler):
     async def retry_after_address_not_found_with_flushed_cache(self, project, service_name, err):
         """ Retry the request again (once!) with cleared caches. """
         if self.request.__riptide_retried:
-            self.pp_500(project["name"], service_name, err)
+            self.pp_500(project["name"], service_name, err, traceback.format_exc())
             return
         self.request.__riptide_retried = True
 
@@ -271,60 +274,50 @@ class ProxyHandler(tornado.web.RequestHandler):
 
     def pp_landing_page(self):
         """ TODO """
-        # TODO
         self.set_status(200)
-        self.write('riptide proxy')
-        pass
+        self.render("pp_landing_page.html", title="Riptide Proxy")
 
-    def pp_500(self, project_name, request_service_name, err):
+    def pp_500(self, project_name, request_service_name, err, trace):
         """ TODO """
-        # TODO
         self.set_status(500)
         logger.exception(err)
-        self.write('riptide proxy - Internal server error:\n' + str(err))
+        self.render("pp_500.html", title="Riptide Proxy - 500 Internal Server Error", trace=trace, err=err)
 
     def pp_502(self, project_name, request_service_name, err):
         """ TODO """
-        # TODO
         self.set_status(502)
-        self.write('riptide proxy - Bad Gateway:\n' + str(err))
+        self.render("pp_502.html", title="Riptide Proxy - 502 Bad Gateway", err=err)
 
     def pp_no_main_service(self, project):
         """ TODO """
-        # TODO
         self.set_status(503)
-        self.write('riptide proxy - pp_no_main_service')
+        self.render("pp_no_main_service.html", title="Riptide Proxy - No Main Service", project=project, base_url=self.config["url"])
 
-    def pp_service_not_found(self, project, resolved_service_name):
+    def pp_service_not_found(self, project, request_service_name):
         """ TODO """
-        # TODO
         self.set_status(400)
-        self.write('riptide proxy - pp_service_not_found')
+        self.render("pp_service_not_found.html", title="Riptide Proxy - Service Not Found", project=project, base_url=self.config["url"], service_name=request_service_name)
 
-    def pp_start_project(self, project):
+    def pp_start_project(self, project, resolved_service_name):
         """ TODO """
-        # TODO
         self.set_status(200)
-        self.write('riptide proxy - autostart here')
+        self.render("pp_start_project.html", title="Riptide Proxy - Starting...", project=project, service_name=resolved_service_name)
 
-    def pp_project_not_started(self, project):
+    def pp_project_not_started(self, project, resolved_service_name):
         """ TODO """
-        # TODO
         self.set_status(503)
-        self.write('riptide proxy - pp_project_not_started')
+        self.render("pp_project_not_started.html", title="Riptide Proxy - Service Not Started", project=project, base_url=self.config["url"], service_name=resolved_service_name)
 
     def pp_project_not_found(self, project_name):
         """ TODO """
-        # TODO
         self.set_status(400)
-        self.write('riptide proxy - pp_project_not_found %s' % project_name)
+        self.render("pp_project_not_found.html", title="Riptide Proxy - Project Not Found", project_name=project_name)
 
     def pp_gateway_timeout(self, project, service_name, address):
         """ TODO """
-        # TODO
         # TODO Link with Reset.
         self.set_status(504)
-        self.write('riptide proxy - Gateway Timeout')
+        self.render("pp_gateway_timeout.html", title="Riptide Proxy - Gateway Timeout", project=project, service_name=service_name)
 
 
 def run_proxy(port, system_config, engine, start_ioloop=True):
@@ -340,7 +333,7 @@ def run_proxy(port, system_config, engine, start_ioloop=True):
             "engine": engine,
             "runtime_storage": runtime_storage
         }),
-    ])
+    ], template_path=os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'tpl'))
     app.listen(port)
     ioloop = tornado.ioloop.IOLoop.current()
     if start_ioloop:

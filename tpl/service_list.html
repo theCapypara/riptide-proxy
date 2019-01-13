@@ -1,0 +1,11 @@
+<hr>
+<h3>Services of {{ project["name"] }}:</h3>
+<ul>
+    {% for service in project["app"]["services"].values() %}
+    {% if "main" in service["roles"] %}
+    <li>{{ service['$name'] }}: <a href="//{{ project['name'] }}.{{ base_url }}">//{{ project["name"] }}.{{ base_url }}</a></li>
+    {% else %}
+    <li>{{ service['$name'] }}: <a href="//{{ project['name'] }}__{{ service['$name'] }}.{{ base_url }}">//{{ project["name"] }}__{{ service['$name'] }}.{{ base_url }}</a></li>
+    {% end %}
+    {% end %}
+</ul>

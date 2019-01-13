@@ -3,7 +3,8 @@ from click import echo
 
 from riptide.cli.helpers import RiptideCliError
 from riptide.config.document.config import Config
-from riptide.config.loader import riptide_main_config_file, load_engine
+from riptide.config.loader import load_engine
+from riptide.config.files import riptide_main_config_file
 from riptide_proxy.server import run_proxy
 
 

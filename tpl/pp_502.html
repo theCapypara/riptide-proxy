@@ -1,0 +1,5 @@
+{% include 'head.html' %}
+<h1>Bad Gateway</h1>
+<p>Riptide Proxy received an invalid response from the requested service.</p>
+<p>Error information: {{ err.__class__.__name__ }}: {{ err }}</p>
+{% include 'foot.html' %}
