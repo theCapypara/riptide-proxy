@@ -14,8 +14,7 @@ def main(ctx):
     """
     TODO Description and arguments/options
     """
-    port = 8888
-    # todo configurable
+    # todo https
     try:
         config_path = riptide_main_config_file()
         system_config = Config.from_yaml(config_path)
@@ -30,9 +29,9 @@ def main(ctx):
     except NotImplementedError as ex:
         raise RiptideCliError('Unknown engine specified in configuration.', ctx) from ex
 
-    echo("Starting HTTP proxy on port %d" % port)
+    echo("Starting Riptide Proxy on port %d" % system_config["proxy"]["ports"]["http"])
 
-    run_proxy(port, system_config, engine)
+    run_proxy(system_config["proxy"]["ports"]["http"], system_config, engine)
 
 # tornado doku: http://www.tornadoweb.org/en/stable/guide/structure.html
 # tornado rp base: https://github.com/senko/tornado-proxy/blob/master/tornado_proxy/proxy.py
