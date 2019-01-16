@@ -111,7 +111,7 @@ class ProxyHandler(tornado.web.RequestHandler):
                 if not resolved_service_name:
                     if not request_service_name:
                         # Load main service if service_name not set
-                        resolved_service_name = project["app"].get_service_name_by_role("main")
+                        resolved_service_name = project["app"].get_service_by_role("main")["$name"]
                         if not resolved_service_name:
                             self.pp_no_main_service(project)
                             return
@@ -177,7 +177,6 @@ class ProxyHandler(tornado.web.RequestHandler):
                 follow_redirects=False,
                 connect_timeout=20,  # todo configurable
                 request_timeout=6000,  # todo configurable
-                decompress_response=False
             )
             response = await client.fetch(req)
             self.proxy_handle_response(response)
@@ -231,8 +230,12 @@ class ProxyHandler(tornado.web.RequestHandler):
         project_cache = self.runtime_storage.project_cache
         if project_file not in project_cache or current_time - project_cache[project_file][1] > cache_timeout:
             logger.debug('Loading project file for %s at %s' % (project_name, project_file))
-            project = load_config(project_file)["project"]
-            project_cache[project_file] = [project, current_time]
+            try:
+                project = load_config(project_file)["project"]
+                project_cache[project_file] = [project, current_time]
+            except Exception:
+                # Project not found
+                return None, None
         else:
             project = project_cache[project_file][0]
             project_cache[project_file][1] = current_time
