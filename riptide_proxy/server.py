@@ -37,9 +37,7 @@
 
 import logging
 import os
-import socket
 import time
-from typing import Tuple, Union, Dict
 
 import tornado.httpserver
 import tornado.ioloop
@@ -48,26 +46,16 @@ import tornado.web
 import tornado.httpclient
 import tornado.httputil
 import traceback
-from recordclass import RecordClass
 
-from riptide.config.document.project import Project
-from riptide.config.document.service import Service
-from riptide.config.loader import load_projects, load_config
+from riptide.config.loader import load_projects
+from riptide_proxy.autostart import SocketHandler
+from riptide_proxy.project_loader import resolve_project, extract_names_from, RuntimeStorage
 
 logger = logging.getLogger('tornado_proxy')
 # TODO: Autostop
 # TODO: SSL
 
 logger.setLevel(logging.DEBUG)
-
-
-class RuntimeStorage(RecordClass):
-    projects_mapping: Dict
-    # A cache of projects. Contains a mapping (project file path) => [project object, age]
-    project_cache: Dict
-    # A cache of ip addresses for services. Contains a mapping (project_name + "__" + service_name) => [address, age]
-    ip_cache: Dict
-
 
 class ProxyHandler(tornado.web.RequestHandler):
 
@@ -92,20 +80,13 @@ class ProxyHandler(tornado.web.RequestHandler):
 
     async def get(self):
 
-        riptide_host_part = "".join(self.request.host.rsplit("." + self.config["url"]))
-        logger.debug('Incoming request for %s', riptide_host_part)
-        if riptide_host_part == self.config["url"]:
+        project_name, request_service_name = extract_names_from(self.request, self.config["url"])
+        if project_name is None:
             self.pp_landing_page()
             return
 
-        parts = riptide_host_part.split("__")
-        project_name = parts[0]
-        request_service_name = None
-        if len(parts) > 1:
-            request_service_name = "__".join(parts[1:])
-
         try:
-            project, resolved_service_name = self.resolve_project(project_name, request_service_name)
+            project, resolved_service_name = resolve_project(project_name, request_service_name, self.runtime_storage, logger)
 
             if project:
                 if not resolved_service_name:
@@ -208,43 +189,6 @@ class ProxyHandler(tornado.web.RequestHandler):
             self.set_header('X-Forwarded-By', 'riptide proxy')
             self.write(response.body)
 
-    def resolve_project(self, project_name, service_name) -> Tuple[Union[Project, None], Union[Service, None]]:
-        """
-        Resolves the project object and service name for the project identified by hostname
-        Service name may be None if no service was specified, and project is None if no project could be loaded.
-        """
-
-        # Get project file
-        if project_name not in self.runtime_storage.projects_mapping:
-            # Try to reload. Maybe it was added?
-            self.runtime_storage.projects_mapping = load_projects()
-            if project_name not in self.runtime_storage.projects_mapping:
-                logger.debug('Could not find project %s' % project_name)
-                # Project not found
-                return None, None
-
-        # Load project from cache. Cache times out after some time.
-        cache_timeout = 120  ## TODO CONFIGURABLE
-        current_time = time.time()
-        project_file = self.runtime_storage.projects_mapping[project_name]
-        project_cache = self.runtime_storage.project_cache
-        if project_file not in project_cache or current_time - project_cache[project_file][1] > cache_timeout:
-            logger.debug('Loading project file for %s at %s' % (project_name, project_file))
-            try:
-                project = load_config(project_file)["project"]
-                project_cache[project_file] = [project, current_time]
-            except Exception:
-                # Project not found
-                return None, None
-        else:
-            project = project_cache[project_file][0]
-            project_cache[project_file][1] = current_time
-
-        # Resolve service - simply return the service name again if found, otherwise just the project
-        if service_name in project["app"]["services"]:
-            return project, service_name
-        return project, None
-
     def resolve_container_address(self, project, service_name):
         cache_timeout = 120  ## TODO CONFIGURABLE
         key = project["name"] + "__" + service_name
@@ -329,13 +273,14 @@ def run_proxy(port, system_config, engine, start_ioloop=True):
     the tornado IOLoop will be started immediately.
     TODO
     """
-    runtime_storage = RuntimeStorage(projects_mapping=load_projects(), project_cache={}, ip_cache={})
+    storage = {
+        "config": system_config["proxy"],
+        "engine": engine,
+        "runtime_storage": RuntimeStorage(projects_mapping=load_projects(), project_cache={}, ip_cache={})
+    }
     app = tornado.web.Application([
-        (r'.*', ProxyHandler, {
-            "config": system_config["proxy"],
-            "engine": engine,
-            "runtime_storage": runtime_storage
-        }),
+        (r'^(?!/___riptide_proxy_ws).*$',    ProxyHandler,   storage),
+        (r'/___riptide_proxy_ws',            SocketHandler,  storage),
     ], template_path=os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'tpl'))
     app.listen(port)
     ioloop = tornado.ioloop.IOLoop.current()
