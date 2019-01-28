@@ -49,7 +49,7 @@ import traceback
 
 from riptide.config.loader import load_projects
 from riptide_proxy.autostart import SocketHandler
-from riptide_proxy.project_loader import resolve_project, extract_names_from, RuntimeStorage
+from riptide_proxy.project_loader import resolve_project, extract_names_from, RuntimeStorage, get_all_projects
 
 logger = logging.getLogger('tornado_proxy')
 # TODO: Autostop
@@ -222,7 +222,8 @@ class ProxyHandler(tornado.web.RequestHandler):
     def pp_landing_page(self):
         """ TODO """
         self.set_status(200)
-        self.render("pp_landing_page.html", title="Riptide Proxy")
+        self.render("pp_landing_page.html", title="Riptide Proxy", base_url=self.config["url"],
+                    all_projects=get_all_projects(self.runtime_storage, logger))
 
     def pp_500(self, project_name, request_service_name, err, trace):
         """ TODO """
@@ -258,7 +259,9 @@ class ProxyHandler(tornado.web.RequestHandler):
     def pp_project_not_found(self, project_name):
         """ TODO """
         self.set_status(400)
-        self.render("pp_project_not_found.html", title="Riptide Proxy - Project Not Found", project_name=project_name)
+        self.render("pp_project_not_found.html", title="Riptide Proxy - Project Not Found",
+                    project_name=project_name, base_url=self.config["url"],
+                    all_projects=get_all_projects(self.runtime_storage, logger))
 
     def pp_gateway_timeout(self, project, service_name, address):
         """ TODO """

@@ -1,2 +1,6 @@
 <hr>
-<p>TODO: Liste von gestarteten services</p>
+<h2>All projects:</h2>
+<p><em>Note: You need to run the Riptide CLI once for projects to appear here.</em></p>
+{% for project in all_projects %}
+    {% include 'service_list.html' %}
+{% end %}

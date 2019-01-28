@@ -1,12 +1,16 @@
 var project_name = '{{ project["name"] }}';
 var host = window.location.host;
-var ws = new WebSocket('ws://' + host + '/___riptide_proxy_ws');
+var proto = location.protocol === 'https:' ? 'wss' : 'ws';
+
+var ws = new WebSocket(proto + '://' + host + '/___riptide_proxy_ws');
+
 ws.onopen = function () {
     // Start: Register project name
     ws.send(JSON.stringify({method: 'register', project: project_name}));
 };
+
 ws.onmessage = function (ev) {
-    message = JSON.parse(ev.data);
+    var message = JSON.parse(ev.data);
     if (message.status === "ready") {
         // Start!
         ws.send(JSON.stringify({method: 'start'}))
@@ -29,6 +33,7 @@ ws.onmessage = function (ev) {
         location.reload();
     }
 };
+
 ws.onclose = function (ev) {
     var reason = 'Unknown';
     if (ev.reason) {

@@ -2,8 +2,7 @@ import time
 
 from logging import Logger
 from recordclass import RecordClass
-from tornado.web import RequestHandler
-from typing import Tuple, Union, Dict
+from typing import Tuple, Union, Dict, List
 
 from riptide.config.document.project import Project
 from riptide.config.document.service import Service
@@ -69,3 +68,19 @@ def resolve_project(project_name, service_name, runtime_storage: RuntimeStorage,
     if service_name in project["app"]["services"]:
         return project, service_name
     return project, None
+
+
+def get_all_projects(runtime_storage, logger) -> List[Project]:
+    """Loads all projects that are found in the projects.json. Always reloads all projects."""
+    logger.debug("Project listing: Requested. Reloading all projects.")
+    runtime_storage.projects_mapping = load_projects()
+    current_time = time.time()
+    for project_name, project_file in runtime_storage.projects_mapping.items():
+        logger.debug("Project listing: Processing %s : %s" % (project_name, project_file))
+        try:
+            project = load_config(project_file)["project"]
+            runtime_storage.project_cache[project_file] = [project, current_time]
+        except Exception as err:
+            # Project could not be loaded
+            logger.warn("Project listing: Could not load %s. Reason: %s" % (project_name, str(err)))
+    return [tupl[0] for tupl in runtime_storage.project_cache.values()]
