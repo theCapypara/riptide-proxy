@@ -21,7 +21,7 @@ def build_status_answer(service_name, status, finished):
         if status:
             update = {
                 'service': service_name,
-                'error': str(status.cause if status.cause else status)
+                'error': str(status)
             }
         else:
             # no error
@@ -106,19 +106,25 @@ class SocketHandler(websocket.WebSocketHandler):
                 logger.debug('WS: STARTING project %s!', p_name)
                 self.__class__.running = True
                 # TODO
+                had_an_error = False
                 try:
                     services = self.project["app"]["services"].keys()
                     async for service_name, status, finished in self.engine.start_project(self.project, services):
                         for client in self.__class__.clients[p_name]:
                             try_write(client, json.dumps(build_status_answer(service_name, status, finished)))
+                        if status and finished:
+                            had_an_error = True
                 except Exception as err:
                     logger.warning('WS: Project %s start ERROR: %s', (p_name, str(err)))
                     for client in self.__class__.clients[p_name]:
                         try_write(client, json.dumps({'status': 'error', 'msg': str(err)}))
                 else:
-                    # Finished
-                    logger.debug('WS: Project %s STARTED!', p_name)
-                    for client in self.__class__.clients[p_name]:
-                        try_write(client, json.dumps({'status': 'success'}))
+                    if not had_an_error:
+                        # Finished
+                        logger.debug('WS: Project %s STARTED!', p_name)
+                        for client in self.__class__.clients[p_name]:
+                            try_write(client, json.dumps({'status': 'success'}))
+                    else:
+                        logger.debug('WS: Project %s ERROR!', p_name)
                 # END TODO
                 self.__class__.running = False
