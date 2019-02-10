@@ -1,19 +1,35 @@
+import os
+
 import click
 from click import echo, ClickException
 
 from riptide.config.document.config import Config
 from riptide.config.files import riptide_main_config_file
 from riptide.engine.loader import load_engine
+from riptide_proxy.privileges import drop_privileges
 from riptide_proxy.server import run_proxy
 
 
 @click.command()
+@click.option('--user', '-u', default=os.environ.get('SUDO_USER'),
+              help='Only on POSIX systems when running as root: '
+                   'Specify user configuration to use. Ignored otherwise. '
+                   'Defaults to environment variable SUDO_USER')
 @click.pass_context
-def main(ctx):
+def main(ctx, user):
     """
     TODO Description and arguments/options
     """
-    # todo https
+    try:
+        if os.getuid() == 0:
+            if not user:
+                raise ClickException("--user parameter required when running as root.")
+            echo("Was running as root. Changing user to %s." % user)
+            drop_privileges(user)
+    except AttributeError:
+        # Windows. Ignore.
+        pass
+
     try:
         config_path = riptide_main_config_file()
         system_config = Config.from_yaml(config_path)
