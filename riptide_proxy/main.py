@@ -1,10 +1,9 @@
 import click
-from click import echo
+from click import echo, ClickException
 
-from riptide.cli.helpers import RiptideCliError
 from riptide.config.document.config import Config
-from riptide.config.loader import load_engine
 from riptide.config.files import riptide_main_config_file
+from riptide.engine.loader import load_engine
 from riptide_proxy.server import run_proxy
 
 
@@ -20,14 +19,14 @@ def main(ctx):
         system_config = Config.from_yaml(config_path)
         system_config.validate()
     except FileNotFoundError as e:
-        raise RiptideCliError("Main config file not found. Run riptide config:create:user.", ctx) from e
+        raise ClickException("Main config file not found. Run riptide config:create:user.", ctx) from e
     except Exception as e:
-        raise RiptideCliError("Error reading configuration.", ctx) from e
+        raise ClickException("Error reading configuration.", ctx) from e
 
     try:
         engine = load_engine(system_config["engine"])
     except NotImplementedError as ex:
-        raise RiptideCliError('Unknown engine specified in configuration.', ctx) from ex
+        raise ClickException('Unknown engine specified in configuration.', ctx) from ex
 
     echo("Starting Riptide Proxy on port %d" % system_config["proxy"]["ports"]["http"])
 
