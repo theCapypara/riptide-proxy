@@ -4,6 +4,8 @@ var proto = location.protocol === 'https:' ? 'wss' : 'ws';
 
 var ws = new WebSocket(proto + '://' + host + '/___riptide_proxy_ws');
 
+var stuckTimer = null;
+
 ws.onopen = function () {
     // Start: Register project name
     ws.send(JSON.stringify({method: 'register', project: project_name}));
@@ -14,6 +16,11 @@ ws.onmessage = function (ev) {
     if (message.status === "ready") {
         // Start!
         ws.send(JSON.stringify({method: 'start'}))
+        // Start stuck timer: 20sec
+        stuckTimer = window.setTimeout(function() {
+            // Only if there are still services starting (yellow bars)
+            document.getElementById('stuck-warning').style.display = 'block';
+        }, 20000)
     } else if (message.status === "update") {
         // Update progress bars
         var service = message.update.service;
@@ -27,10 +34,15 @@ ws.onmessage = function (ev) {
         }
     } else if (message.status === "success") {
         // Done!
+        if (stuckTimer) window.clearTimeout(stuckTimer);
         document.querySelectorAll('#autostart-table [data-service]').forEach(function (elem) {
             finish(elem);
         });
         location.reload();
+    } else if (message.status === "failed") {
+        // Failed! :(
+        if (stuckTimer) window.clearTimeout(stuckTimer);
+        document.getElementById('error-warning').style.display = 'block';
     }
 };
 

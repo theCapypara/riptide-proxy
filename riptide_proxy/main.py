@@ -15,8 +15,7 @@ from riptide_proxy.server import run_proxy
               help='Only on POSIX systems when running as root: '
                    'Specify user configuration to use. Ignored otherwise. '
                    'Defaults to environment variable SUDO_USER')
-@click.pass_context
-def main(ctx, user):
+def main(user):
     """
     TODO Description and arguments/options
     """
@@ -35,14 +34,14 @@ def main(ctx, user):
         system_config = Config.from_yaml(config_path)
         system_config.validate()
     except FileNotFoundError as e:
-        raise ClickException("Main config file not found. Run riptide config:create:user.", ctx) from e
+        raise ClickException("Main config file not found. Run riptide config:create:user.") from e
     except Exception as e:
-        raise ClickException("Error reading configuration.", ctx) from e
+        raise ClickException("Error reading configuration.") from e
 
     try:
         engine = load_engine(system_config["engine"])
     except NotImplementedError as ex:
-        raise ClickException('Unknown engine specified in configuration.', ctx) from ex
+        raise ClickException('Unknown engine specified in configuration.') from ex
 
     echo("Starting Riptide Proxy on port %d" % system_config["proxy"]["ports"]["http"])
 

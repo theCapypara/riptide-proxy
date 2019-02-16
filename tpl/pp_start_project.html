@@ -3,6 +3,8 @@
 <p>The service "{{ service_name }}" in "{{ project["name"] }}" is not running. </p>
 <p>Autostart ist enabled. I will now start all services in the project.</p>
 <hr>
+<p id="stuck-warning">If the process is stuck and you wish to reset it, run riptide stop and restart the proxy server.</p>
+<p id="error-warning">Startup of one or more services failed.</p>
 <div id="autostart-table">
     {% for service in project["app"]["services"].keys() %}
         <div class="at-entry" data-service="{{ service }}">

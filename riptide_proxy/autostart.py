@@ -126,5 +126,7 @@ class SocketHandler(websocket.WebSocketHandler):
                             try_write(client, json.dumps({'status': 'success'}))
                     else:
                         logger.debug('WS: Project %s ERROR!', p_name)
+                        for client in self.__class__.clients[p_name]:
+                            try_write(client, json.dumps({'status': 'failed'}))
                 # END TODO
                 self.__class__.running = False

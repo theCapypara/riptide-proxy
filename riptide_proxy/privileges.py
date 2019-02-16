@@ -28,10 +28,10 @@ def drop_privileges(uid_name='nobody', gid_name=None):
     # Try setting the new gid
     os.setgid(running_gid)
 
-    import prctl
-
     # Linux: Limit capabilities to only being able to change uid and binding ports below 1024
+    is_linux = False
     if platform.system().lower().startswith('lin'):
+        is_linux = True
         import prctl
         prctl.securebits.keep_caps = True
         prctl.securebits.no_setuid_fixup = True
@@ -46,8 +46,9 @@ def drop_privileges(uid_name='nobody', gid_name=None):
     os.setuid(running_uid)
 
     # We still need to have our caps.
-    assert prctl.cap_permitted.net_bind_service
-    assert prctl.cap_effective.net_bind_service
+    if is_linux:
+        assert prctl.cap_permitted.net_bind_service
+        assert prctl.cap_effective.net_bind_service
 
     # Ensure a very conservative umask
     os.umask(0o22)
@@ -55,7 +56,7 @@ def drop_privileges(uid_name='nobody', gid_name=None):
     os.environ['HOME'] = pwd_user.pw_dir
 
     # Linux: Remove setuid cap again
-    if prctl:
+    if is_linux:
         try:
             prctl.capbset.drop(prctl.CAP_SETUID)
         except PermissionError:
