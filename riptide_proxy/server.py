@@ -154,7 +154,7 @@ class ProxyHandler(tornado.web.RequestHandler):
                 address + self.request.uri,
                 method=self.request.method,
                 body=body,
-                headers=self.request.headers,
+                headers=headers,
                 follow_redirects=False,
                 connect_timeout=20,  # todo configurable
                 request_timeout=6000,  # todo configurable
@@ -270,7 +270,7 @@ class ProxyHandler(tornado.web.RequestHandler):
         self.render("pp_gateway_timeout.html", title="Riptide Proxy - Gateway Timeout", project=project, service_name=service_name)
 
 
-def run_proxy(port, system_config, engine, start_ioloop=True):
+def run_proxy(system_config, engine, http_port, https_port, ssl_options, start_ioloop=True):
     """
     Run proxy on the specified port. If start_ioloop is True (default),
     the tornado IOLoop will be started immediately.
@@ -281,11 +281,17 @@ def run_proxy(port, system_config, engine, start_ioloop=True):
         "engine": engine,
         "runtime_storage": RuntimeStorage(projects_mapping=load_projects(), project_cache={}, ip_cache={})
     }
+
     app = tornado.web.Application([
         (r'^(?!/___riptide_proxy_ws).*$',    ProxyHandler,   storage),
         (r'/___riptide_proxy_ws',            SocketHandler,  storage),
     ], template_path=os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'tpl'))
-    app.listen(port)
+    app.listen(http_port)
+
+    if https_port:
+        https_app = tornado.httpserver.HTTPServer(app, ssl_options=ssl_options)
+        https_app.listen(https_port)
+
     ioloop = tornado.ioloop.IOLoop.current()
     if start_ioloop:
         ioloop.start()

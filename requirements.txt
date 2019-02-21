@@ -3,3 +3,4 @@ tornado==5.1.1
 Click==7.0
 recordclass==0.7
 python-prctl==1.7; sys_platform == 'linux'
+certauth==1.2.1
