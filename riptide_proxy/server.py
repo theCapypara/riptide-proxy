@@ -286,10 +286,11 @@ def run_proxy(system_config, engine, http_port, https_port, ssl_options, start_i
         (r'^(?!/___riptide_proxy_ws).*$',    ProxyHandler,   storage),
         (r'/___riptide_proxy_ws',            SocketHandler,  storage),
     ], template_path=os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'tpl'))
-    app.listen(http_port)
+    # xheaders enables parsing of X-Forwarded-Ip etc. headers
+    app.listen(http_port, xheaders=True)
 
     if https_port:
-        https_app = tornado.httpserver.HTTPServer(app, ssl_options=ssl_options)
+        https_app = tornado.httpserver.HTTPServer(app, ssl_options=ssl_options, xheaders=True)
         https_app.listen(https_port)
 
     ioloop = tornado.ioloop.IOLoop.current()
