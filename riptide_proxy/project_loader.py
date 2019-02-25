@@ -84,3 +84,21 @@ def get_all_projects(runtime_storage, logger) -> List[Project]:
             # Project could not be loaded
             logger.warn("Project listing: Could not load %s. Reason: %s" % (project_name, str(err)))
     return [tupl[0] for tupl in runtime_storage.project_cache.values()]
+
+
+def resolve_container_address(project, service_name, engine, runtime_storage, logger):
+    cache_timeout = 120  ## TODO CONFIGURABLE
+    key = project["name"] + "__" + service_name
+    current_time = time.time()
+    ip_cache = runtime_storage.ip_cache
+    if key not in ip_cache or current_time - ip_cache[key][1] > cache_timeout:
+        address = engine.address_for(project, service_name)
+        logger.debug('Got container address for %s: %s' % (key, address))
+        if address:
+            address = "http://" + address[0] + ":" + str(address[1])
+            # Only cache if we actually got something.
+            ip_cache[key] = [address, current_time]
+    else:
+        address = ip_cache[key][0]
+        ip_cache[key][1] = current_time
+    return address

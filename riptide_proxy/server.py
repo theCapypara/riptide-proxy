@@ -43,19 +43,32 @@ import tornado.httpserver
 import tornado.ioloop
 import tornado.iostream
 import tornado.web
+import tornado.routing
 import tornado.httpclient
 import tornado.httputil
 import traceback
+from tornado import websocket, ioloop
+from tornado.websocket import websocket_connect
 
 from riptide.config.loader import load_projects
-from riptide_proxy.autostart import SocketHandler
-from riptide_proxy.project_loader import resolve_project, extract_names_from, RuntimeStorage, get_all_projects
+from riptide_proxy.autostart import AutostartHandler
+from riptide_proxy.project_loader import resolve_project, extract_names_from, RuntimeStorage, get_all_projects, \
+    resolve_container_address
 
 logger = logging.getLogger('tornado_proxy')
 # TODO: Autostop
 # TODO: SSL
 
 logger.setLevel(logging.DEBUG)
+
+
+class RiptideNoWebSocketMatcher(tornado.routing.PathMatches):
+    def match(self, request):
+        """ Match path but ONLY non-Websocket requests """
+        if "Upgrade" in request.headers and request.headers["Upgrade"] == "websocket":
+            return None
+        return super().match(request)
+
 
 class ProxyHandler(tornado.web.RequestHandler):
 
@@ -100,7 +113,7 @@ class ProxyHandler(tornado.web.RequestHandler):
                         self.pp_service_not_found(project, request_service_name)
                         return
                 # Resolve address and proxy the request
-                address = self.resolve_container_address(project, resolved_service_name)
+                address = resolve_container_address(project, resolved_service_name, self.engine, self.runtime_storage, logger)
                 if address:
                     await self.reverse_proxy(project, resolved_service_name, address)
                 elif self.config["autostart"]:
@@ -189,23 +202,6 @@ class ProxyHandler(tornado.web.RequestHandler):
             self.set_header('X-Forwarded-By', 'riptide proxy')
             self.write(response.body)
 
-    def resolve_container_address(self, project, service_name):
-        cache_timeout = 120  ## TODO CONFIGURABLE
-        key = project["name"] + "__" + service_name
-        current_time = time.time()
-        ip_cache = self.runtime_storage.ip_cache
-        if key not in ip_cache or current_time - ip_cache[key][1] > cache_timeout:
-            address = self.engine.address_for(project, service_name)
-            logger.debug('Got container address for %s: %s' % (key, address))
-            if address:
-                address = "http://" + address[0] + ":" + str(address[1])
-                # Only cache if we actually got something.
-                ip_cache[key] = [address, current_time]
-        else:
-            address = ip_cache[key][0]
-            ip_cache[key][1] = current_time
-        return address
-
     async def retry_after_address_not_found_with_flushed_cache(self, project, service_name, err):
         """ Retry the request again (once!) with cleared caches. """
         if self.request.__riptide_retried:
@@ -270,6 +266,83 @@ class ProxyHandler(tornado.web.RequestHandler):
         self.render("pp_gateway_timeout.html", title="Riptide Proxy - Gateway Timeout", project=project, service_name=service_name)
 
 
+class ProxyWebsocketHandler(websocket.WebSocketHandler):
+    """ Implementation of the Proxy for Websockets """
+    def __init__(self, application, request, config, engine, runtime_storage, **kwargs):
+        """
+        TODO
+        :raises: FileNotFoundError if the system config was not found
+        :raises: schema.SchemaError on validation errors
+        """
+        super().__init__(application, request, **kwargs)
+        self.config = config
+        self.engine = engine
+        self.runtime_storage = runtime_storage
+        self.conn = None
+
+    async def open(self, *args, **kwargs):
+        """
+        Retreive the target container or close the connection with error if not found. After that act as Websocket Proxy.
+        Source: https://github.com/tornadoweb/tornado/issues/2538
+        """
+
+        # TODO: CLEANUP DUPLICATE CODE
+
+        project_name, request_service_name = extract_names_from(self.request, self.config["url"])
+        if project_name is None:
+            self.close(1014)  # 1014 is bad gateway
+            return
+
+        logger.debug("Incoming WebSocket Proxy request for project %s; service %s" % (project_name, request_service_name))
+
+        try:
+            project, resolved_service_name = resolve_project(project_name, request_service_name, self.runtime_storage, logger)
+
+            if project:
+                if not resolved_service_name:
+                    if not request_service_name:
+                        # Load main service if service_name not set
+                        resolved_service_name = project["app"].get_service_by_role("main")["$name"]
+                        if not resolved_service_name:
+                            logger.warning("WebSocket Proxy: No main service for %s, %s" % (project_name, request_service_name))
+                            self.close(1014)
+                            return
+                    else:
+                        logger.warning("WebSocket Proxy: Service not found for %s, %s" % (project_name, request_service_name))
+                        self.close(1014)
+                        return
+                # Resolve address and proxy the request
+                address = resolve_container_address(project, resolved_service_name, self.engine, self.runtime_storage, logger)
+                if not address:
+                    logger.warning("WebSocket Proxy: Had no ip for %s, %s" % (project_name, request_service_name))
+                    self.close(1014)
+                    return
+        except Exception as err:
+            logger.warning("Errror during WebSocket proxy for %s, %s: %s"
+                           % (project_name, request_service_name, str(err)))
+            self.close(1014)
+            return
+
+
+        self.conn = await websocket_connect(address.replace('http://', 'ws://') + self.request.uri)
+
+        async def proxy_loop():
+            while True:
+                msg = await self.conn.read_message()
+                if msg is None:
+                    break
+                await self.write_message(msg)
+
+        ioloop.IOLoop.current().spawn_callback(proxy_loop)
+        logger.debug("Proxy established")
+
+    def on_message(self, message):
+        self.conn.write_message(message)
+
+    def on_close(self, code=None, reason=None):
+        self.conn.close(code, reason)
+
+
 def run_proxy(system_config, engine, http_port, https_port, ssl_options, start_ioloop=True):
     """
     Run proxy on the specified port. If start_ioloop is True (default),
@@ -283,8 +356,9 @@ def run_proxy(system_config, engine, http_port, https_port, ssl_options, start_i
     }
 
     app = tornado.web.Application([
-        (r'^(?!/___riptide_proxy_ws).*$',    ProxyHandler,   storage),
-        (r'/___riptide_proxy_ws',            SocketHandler,  storage),
+        (RiptideNoWebSocketMatcher(r'^(?!/___riptide_proxy_ws).*$'),    ProxyHandler,   storage),
+        (r'^(?!/___riptide_proxy_ws).*$', ProxyWebsocketHandler, storage),
+        (r'/___riptide_proxy_ws', AutostartHandler, storage),
     ], template_path=os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'tpl'))
     # xheaders enables parsing of X-Forwarded-Ip etc. headers
     app.listen(http_port, xheaders=True)

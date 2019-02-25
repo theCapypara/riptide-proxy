@@ -48,7 +48,7 @@ def build_status_answer(service_name, status, finished):
 
 
 # TODO DOC
-class SocketHandler(websocket.WebSocketHandler):
+class AutostartHandler(websocket.WebSocketHandler):
 
     def __init__(self, application, request, config, engine, runtime_storage, **kwargs):
         super().__init__(application, request, **kwargs)
