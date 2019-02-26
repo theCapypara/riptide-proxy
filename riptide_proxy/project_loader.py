@@ -18,7 +18,9 @@ class RuntimeStorage(RecordClass):
 
 
 def extract_names_from(request, base_url):
-    riptide_host_part = "".join(request.host.rsplit("." + base_url))
+    # Remove ports from host
+    real_host = request.host.split(":")[0]
+    riptide_host_part = "".join(real_host.rsplit("." + base_url))
     if riptide_host_part == base_url:
         return None, None
 
