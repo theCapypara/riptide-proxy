@@ -19,4 +19,4 @@ def get_ca_path():
 def create_keys(temp_dir, common_name):
     ca = CertificateAuthority('Riptide Proxy CA for %s' % socket.gethostname(),
                               get_ca_path(), cert_cache=temp_dir)
-    return ca.get_wildcard_cert(common_name)
+    return ca.get_wildcard_cert('*.' + common_name)
