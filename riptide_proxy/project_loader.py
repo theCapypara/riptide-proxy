@@ -5,7 +5,7 @@ from recordclass import RecordClass
 from typing import Tuple, Union, Dict, List
 
 from riptide.config.document.project import Project
-from riptide.config.document.service import Service
+from riptide.config.document.service import Service, DOMAIN_PROJECT_SERVICE_SEP
 from riptide.config.loader import load_projects, load_config
 
 
@@ -24,11 +24,11 @@ def extract_names_from(request, base_url):
     if riptide_host_part == base_url:
         return None, None
 
-    parts = riptide_host_part.split("__")
+    parts = riptide_host_part.split(DOMAIN_PROJECT_SERVICE_SEP)
     project_name = parts[0]
     request_service_name = None
     if len(parts) > 1:
-        request_service_name = "__".join(parts[1:])
+        request_service_name = DOMAIN_PROJECT_SERVICE_SEP.join(parts[1:])
 
     return project_name, request_service_name
 
@@ -90,7 +90,7 @@ def get_all_projects(runtime_storage, logger) -> List[Project]:
 
 def resolve_container_address(project, service_name, engine, runtime_storage, logger):
     cache_timeout = 120  ## TODO CONFIGURABLE
-    key = project["name"] + "__" + service_name
+    key = project["name"] + DOMAIN_PROJECT_SERVICE_SEP + service_name
     current_time = time.time()
     ip_cache = runtime_storage.ip_cache
     if key not in ip_cache or current_time - ip_cache[key][1] > cache_timeout:

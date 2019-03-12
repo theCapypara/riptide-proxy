@@ -2,11 +2,7 @@
 <ul>
     {% for service in project["app"]["services"].values() %}
         {% if "port" in service %}
-            {% if "main" in service["roles"] %}
-                <li>{{ service['$name'] }}: <a href="//{{ project['name'] }}.{{ base_url }}">//{{ project["name"] }}.{{ base_url }}</a></li>
-            {% else %}
-                <li>{{ service['$name'] }}: <a href="//{{ project['name'] }}__{{ service['$name'] }}.{{ base_url }}">//{{ project["name"] }}__{{ service['$name'] }}.{{ base_url }}</a></li>
-            {% end %}
+            <li>{{ service['$name'] }}: <a href="//{{ service.domain() }}">//{{ service.domain() }}</a></li>
         {% end %}
     {% end %}
 </ul>
