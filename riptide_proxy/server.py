@@ -32,8 +32,6 @@
 # - http://nginx.org/en/docs/http/ngx_http_realip_module.html
 # - https://www.tornadoweb.org/en/stable/httputil.html#tornado.httputil.HTTPServerRequest
 #
-# TODO Testing:
-# - https://github.com/mnot/cdn-tests
 
 import logging
 import os
@@ -56,8 +54,6 @@ from riptide_proxy.project_loader import resolve_project, extract_names_from, Ru
     resolve_container_address
 
 logger = logging.getLogger('tornado_proxy')
-# TODO: Autostop
-# TODO: SSL
 
 logger.setLevel(logging.DEBUG)
 
@@ -261,7 +257,6 @@ class ProxyHandler(tornado.web.RequestHandler):
 
     def pp_gateway_timeout(self, project, service_name, address):
         """ TODO """
-        # TODO Link with Reset.
         self.set_status(504)
         self.render("pp_gateway_timeout.html", title="Riptide Proxy - Gateway Timeout", project=project, service_name=service_name)
 

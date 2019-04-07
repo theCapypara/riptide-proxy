@@ -105,7 +105,6 @@ class AutostartHandler(websocket.WebSocketHandler):
             if not self.__class__.running:
                 logger.debug('WS: STARTING project %s!', p_name)
                 self.__class__.running = True
-                # TODO
                 had_an_error = False
                 try:
                     services = self.project["app"]["services"].keys()
@@ -128,5 +127,4 @@ class AutostartHandler(websocket.WebSocketHandler):
                         logger.debug('WS: Project %s ERROR!', p_name)
                         for client in self.__class__.clients[p_name]:
                             try_write(client, json.dumps({'status': 'failed'}))
-                # END TODO
                 self.__class__.running = False
