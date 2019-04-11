@@ -4,6 +4,7 @@ setup(
     name='riptide_proxy',
     version='0.1',
     packages=find_packages(),
+    include_package_data=True,
     description='TODO',  # TODO
     long_description='TODO - Project will be available starting May/June',  # TODO
     install_requires=[
