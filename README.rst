@@ -23,6 +23,12 @@
 .. _docs:           https://github.com/Parakoopa/riptide-docs
 .. _repo:           https://github.com/Parakoopa/riptide-repo
 
+|docs|
+
+.. |docs| image:: https://readthedocs.org/projects/riptide-docs/badge/?version=latest
+    :target: https://riptide-docs.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
+
 Riptide is a set of tools to manage development environments for web applications.
 It's using container virtualization tools, such as `Docker <https://www.docker.com/>`_
 to run all services needed for a project.
