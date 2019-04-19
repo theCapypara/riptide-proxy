@@ -24,7 +24,11 @@
 .. _repo:           https://github.com/Parakoopa/riptide-repo
 .. _docker_images:  https://github.com/Parakoopa/riptide-docker-images
 
-|docs|
+|build| |docs|
+
+.. |build| image:: https://jenkins.riptide.parakoopa.de/buildStatus/icon?job=riptide-proxy%2Fmaster
+    :target: https://jenkins.riptide.parakoopa.de/blue/organizations/jenkins/riptide-proxy/activity
+    :alt: Build Status
 
 .. |docs| image:: https://readthedocs.org/projects/riptide-docs/badge/?version=latest
     :target: https://riptide-docs.readthedocs.io/en/latest/?badge=latest
@@ -38,6 +42,8 @@ It's goal is to be easy to use by developers.
 Riptide abstracts the virtualization in such a way that the environment behaves exactly
 as if you were running it natively, without the need to install any other requirements
 the project may have.
+
+It can be installed via pip by installing ``riptide_proxy``.
 
 Proxy Server
 ------------
