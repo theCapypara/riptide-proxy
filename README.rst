@@ -43,7 +43,7 @@ Riptide abstracts the virtualization in such a way that the environment behaves 
 as if you were running it natively, without the need to install any other requirements
 the project may have.
 
-It can be installed via pip by installing ``riptide_proxy``.
+It can be installed via pip by installing ``riptide-proxy``.
 
 Proxy Server
 ------------
