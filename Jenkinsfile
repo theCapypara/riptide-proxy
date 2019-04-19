@@ -33,7 +33,7 @@ pipeline {
                 TWINE    = credentials('parakoopa-twine-username-password')
             }
             steps {
-                sh 'twine -u "$TWINE_USR" -p "$TWINE_PSW" upload dist/*'
+                sh 'twine upload -u "$TWINE_USR" -p "$TWINE_PSW" dist/*'
             }
         }
 
