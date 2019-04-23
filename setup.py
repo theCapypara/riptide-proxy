@@ -1,4 +1,3 @@
-import warnings
 from setuptools import setup, find_packages
 import sys
 import subprocess
@@ -27,16 +26,16 @@ def additional_requirements():
     print('riptide-proxy: Installing additional requirement: ' + ADDITIONAL_REQS_PRCTL)
     retcode = subprocess.call([sys.executable, "-m", "pip", "install", ADDITIONAL_REQS_PRCTL])
     if retcode != 0:
-        warnings.warn('riptide-proxy: Could not install python-prctl. Running with sudo impossible, the proxy may or may '
-                      'not work correctly! Please install prctl-dev and reinstall the proxy server.')
+        print('!!! WARNING: Could not install python-prctl. Running with sudo impossible, the proxy may or may '
+              'not work correctly! Please install prctl-dev and reinstall the proxy server.')
 
     # ALL PLATFORMS: cerauth
     print('-------------')
     print('riptide-proxy: Installing additional requirement: ' + ADDITIONAL_REQS_CERTAUTH)
     retcode = subprocess.call([sys.executable, "-m", "pip", "install", ADDITIONAL_REQS_CERTAUTH])
     if retcode != 0:
-        warnings.warn('!!! WARNING: Could not install certauth. HTTPS impossible to use, the proxy may or may '
-                      'not work correctly! Please fix OpenSSL setup and reinstall the proxy server.')
+        print('!!! WARNING: Could not install certauth. HTTPS impossible to use, the proxy may or may '
+              'not work correctly! Please fix OpenSSL setup and reinstall the proxy server.')
     print('-------------')
 
 
