@@ -38,9 +38,9 @@ def run_proxy(system_config, engine, http_port, https_port, ssl_options, start_i
 
     # Configure Routes
     app = tornado.web.Application([
-        # Any non-autostart websockets
-        (RiptideNoWebSocketMatcher(r'^(?!/___riptide_proxy_ws).*$'), ProxyHttpHandler, storage),
         # http
+        (RiptideNoWebSocketMatcher(r'^(?!/___riptide_proxy_ws).*$'), ProxyHttpHandler, storage),
+        # Any non-autostart websockets
         (r'^(?!/___riptide_proxy_ws).*$', ProxyWebsocketHandler, storage),
         # autostart websockets
         (r'/___riptide_proxy_ws', AutostartHandler, storage),
