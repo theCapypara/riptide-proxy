@@ -1,5 +1,10 @@
 """Module for dropping root privileges on POSIX systems.
-Source: https://stackoverflow.com/a/2699996, https://stackoverflow.com/a/44689594, https://pythonhosted.org/python-prctl/ """
+
+Inspired by / sources:
+- https://stackoverflow.com/a/2699996
+- https://stackoverflow.com/a/44689594
+- https://pythonhosted.org/python-prctl/
+"""
 
 import os, pwd, grp
 import platform

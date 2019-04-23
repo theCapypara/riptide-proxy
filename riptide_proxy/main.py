@@ -1,15 +1,26 @@
-import os
-
 import click
-from click import echo, ClickException, style
+import logging
+import pkg_resources
+from click import ClickException, echo
 from tempfile import TemporaryDirectory
 
 from riptide.config.document.config import Config
 from riptide.config.files import riptide_main_config_file
 from riptide.engine.loader import load_engine
+from riptide.util import get_riptide_version_raw
+from riptide_proxy import LOGGER_NAME
 from riptide_proxy.privileges import drop_privileges
-from riptide_proxy.server import run_proxy
+from riptide_proxy.server.starter import run_proxy
 from riptide_proxy.ssl_key import *
+
+# Configure logger
+logging.basicConfig()
+logger = logging.getLogger(LOGGER_NAME)
+
+
+def print_version():
+    echo("riptide_lib: %s" % get_riptide_version_raw())
+    echo("riptide_proxy: %s" % pkg_resources.get_distribution("riptide_proxy").version)
 
 
 @click.command()
@@ -17,17 +28,31 @@ from riptide_proxy.ssl_key import *
               help='Only on POSIX systems when running as root: '
                    'Specify user configuration to use. Ignored otherwise. '
                    'Defaults to environment variable SUDO_USER')
-def main(user):
+@click.option('--version', is_flag=True,
+              help="Print version and exit.")
+@click.option('--loglevel', '-l', type=click.Choice(['DEBUG', 'INFO', 'WARNING', 'ERROR', 'FATAL', 'CRITICAL']),
+              default='INFO',
+              help="Log level. Default: INFO")
+def main(user, loglevel, version=False):
     """
-    TODO Description and arguments/options
+    HTTP and Websocket Reverse Proxy for Riptide Projects.
+
+    See the documentation at https://riptide-docs.readthedocs.io/
     """
+
+    logger.setLevel(logging.getLevelName(loglevel))
+
+    # Version flag
+    if version:
+        print_version()
+        exit()
 
     # Set privileges and drop back to user level
     try:
         if os.getuid() == 0:
             if not user:
                 raise ClickException("--user parameter required when running as root.")
-            echo("Was running as root. Changing user to %s." % user)
+            logger.info("Was running as root. Changing user to %s." % user)
             drop_privileges(user)
     except AttributeError:
         # Windows. Ignore.
@@ -49,18 +74,15 @@ def main(user):
     except NotImplementedError as ex:
         raise ClickException('Unknown engine specified in configuration.') from ex
 
-    # load SSL
     with TemporaryDirectory() as temp_dir:
+        # Load SSL
         ssl_options = None
         if system_config["proxy"]["ports"]["https"]:
             pem_file = create_keys(temp_dir, system_config["proxy"]["url"])
-            echo("Starting Riptide Proxy on HTTPS port %d" % system_config["proxy"]["ports"]["https"])
             ssl_options = {
                 "certfile": pem_file,
                 "keyfile": pem_file,
             }
-
-        echo("Starting Riptide Proxy on HTTP port %d" % system_config["proxy"]["ports"]["http"])
 
         # Run Proxy
         run_proxy(
@@ -70,7 +92,3 @@ def main(user):
             https_port=system_config["proxy"]["ports"]["https"],
             ssl_options=ssl_options
         )
-
-# tornado doku: http://www.tornadoweb.org/en/stable/guide/structure.html
-# tornado rp base: https://github.com/senko/tornado-proxy/blob/master/tornado_proxy/proxy.py
-# websockets doku: https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_client_applications

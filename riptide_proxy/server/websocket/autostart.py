@@ -2,7 +2,8 @@ import json
 import logging
 from tornado import websocket
 
-from riptide_proxy.project_loader import resolve_project
+from riptide_proxy.project_loader import load_project_and_service
+from riptide_proxy.server.websocket import ERR_BAD_GATEWAY
 
 logger = logging.getLogger('tornado_proxy')
 
@@ -16,7 +17,7 @@ def try_write(client, msg):
 
 
 def build_status_answer(service_name, status, finished):
-    """TODO DOC"""
+    """Build the autostart answer json based on event"""
     if finished:
         if status:
             update = {
@@ -47,10 +48,12 @@ def build_status_answer(service_name, status, finished):
     }
 
 
-# TODO DOC
 class AutostartHandler(websocket.WebSocketHandler):
 
     def __init__(self, application, request, config, engine, runtime_storage, **kwargs):
+        """
+        Websocket connection for autostarting a service.
+        """
         super().__init__(application, request, **kwargs)
         self.project = None
         self.config = config
@@ -81,9 +84,9 @@ class AutostartHandler(websocket.WebSocketHandler):
 
         # Register a project to monitor for this websocket connection
         if decoded_message['method'] == "register":  # {method: register, project: ...}
-            project, _ = resolve_project(decoded_message['project'], None, self.runtime_storage, logger)
+            project, _ = load_project_and_service(decoded_message['project'], None, self.runtime_storage)
             if project is None:
-                self.close(403, 'Project not found.')
+                self.close(ERR_BAD_GATEWAY, 'Project not found.')
                 return
 
             self.project = project
