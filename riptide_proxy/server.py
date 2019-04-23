@@ -37,6 +37,7 @@ import logging
 import os
 import time
 
+import pkg_resources
 import tornado.httpserver
 import tornado.ioloop
 import tornado.iostream
@@ -354,7 +355,7 @@ def run_proxy(system_config, engine, http_port, https_port, ssl_options, start_i
         (RiptideNoWebSocketMatcher(r'^(?!/___riptide_proxy_ws).*$'),    ProxyHandler,   storage),
         (r'^(?!/___riptide_proxy_ws).*$', ProxyWebsocketHandler, storage),
         (r'/___riptide_proxy_ws', AutostartHandler, storage),
-    ], template_path=os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'tpl'))
+    ], template_path=pkg_resources.resource_filename(__name__, 'tpl'))
     # xheaders enables parsing of X-Forwarded-Ip etc. headers
     app.listen(http_port, xheaders=True)
 
