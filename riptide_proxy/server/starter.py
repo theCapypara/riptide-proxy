@@ -20,7 +20,6 @@ def run_proxy(system_config, engine, http_port, https_port, ssl_options, start_i
     """
     Run proxy on the specified port. If start_ioloop is True (default),
     the tornado IOLoop will be started immediately.
-    TODO
     """
 
     logger.info("Starting Riptide Proxy on HTTP: http://%s:%d"

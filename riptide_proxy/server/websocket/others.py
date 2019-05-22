@@ -13,7 +13,6 @@ class ProxyWebsocketHandler(websocket.WebSocketHandler):
     """ Implementation of the Proxy for Websockets """
     def __init__(self, application, request, config, engine, runtime_storage, **kwargs):
         """
-        TODO
         :raises: FileNotFoundError if the system config was not found
         :raises: schema.SchemaError on validation errors
         """
