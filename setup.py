@@ -59,7 +59,7 @@ class AdditionalRequirementsEggInfo(egg_info):
 
 setup(
     name='riptide-proxy',
-    version='0.1.2',
+    version='0.2.0',
     packages=find_packages(),
     package_data={'riptide_proxy': ['tpl/*']},
     description='Tool to manage development environments for web applications using containers - HTTP and WebSocket Reverse Proxy Server',
@@ -67,7 +67,7 @@ setup(
     long_description_content_type='text/x-rst',
     url='https://github.com/Parakoopa/riptide-proxy/',
     install_requires=[
-        'riptide-lib >= 0.1, < 0.2',
+        'riptide-lib >= 0.2, < 0.3',
         'tornado >= 5.1',
         'Click >= 7.0',
         'recordclass >= 0.7'
