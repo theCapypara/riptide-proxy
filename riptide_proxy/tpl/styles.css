@@ -95,6 +95,8 @@ hr {
 .progress {
     height: 1em;
     border-radius: 1em;
+    -webkit-transition: width 0.2s;
+    transition: width 0.2s;
 }
 
 .progress.wrapper {
@@ -102,16 +104,37 @@ hr {
     width: 100%;
 }
 
+.progress-bar {
+    background-image:
+      repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 0.4rem,
+        rgba(0,0,0,0.1) 0.4rem,
+        rgba(0,0,0,0.1) 0.8rem
+      );
+    background-size: 1000% 1000%;
+    animation: baranim 50s linear infinite;
+}
+
+@keyframes baranim {
+  100% {
+    background-position: -100% 100%;
+  }
+}
+
 .progress.yellow {
-    background-color: yellow;
+    background-color: #FFE90C;
 }
 
 .progress.green {
-    background-color: greenyellow;
+    background-color: #1EE800;
+    animation: none;
 }
 
 .progress.red {
-    background-color: red;
+    background-color: #FA0200;
+    animation: none;
 }
 
 #autostart-error {

@@ -20,7 +20,7 @@ ws.onmessage = function (ev) {
         stuckTimer = window.setTimeout(function() {
             // Only if there are still services starting (yellow bars)
             document.getElementById('stuck-warning').style.display = 'block';
-        }, 20000)
+        }, 40000)
     } else if (message.status === "update") {
         // Update progress bars
         var service = message.update.service;

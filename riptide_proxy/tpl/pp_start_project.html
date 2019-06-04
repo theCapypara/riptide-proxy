@@ -1,7 +1,7 @@
 {% include 'head.html' %}
 <h1>Starting {{ project["name"] }}...</h1>
 <p>The service "{{ service_name }}" in "{{ project["name"] }}" is not running. </p>
-<p>Autostart ist enabled. I will now start all services in the project.</p>
+<p>Autostart ist enabled. The services in the project will now be started...</p>
 <hr>
 <p id="stuck-warning">If the process is stuck and you wish to reset it, run riptide stop and restart the proxy server.</p>
 <p id="error-warning">Startup of one or more services failed.</p>
@@ -15,7 +15,7 @@
                 </div>
                 <div class="at-col col-progress">
                     <div class="progress wrapper">
-                        <div class="progress yellow" style="width: 0%;"></div>
+                        <div class="progress progress-bar yellow" style="width: 0%;"></div>
                     </div>
                 </div>
             </div>
