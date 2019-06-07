@@ -59,7 +59,7 @@ class AdditionalRequirementsEggInfo(egg_info):
 
 setup(
     name='riptide-proxy',
-    version='0.2.0',
+    version='0.2.1',
     packages=find_packages(),
     package_data={'riptide_proxy': ['tpl/*']},
     description='Tool to manage development environments for web applications using containers - HTTP and WebSocket Reverse Proxy Server',
