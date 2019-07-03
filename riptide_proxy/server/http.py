@@ -159,6 +159,7 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
                 follow_redirects=False,
                 connect_timeout=UPSTREAM_CONNECT_TIMEOUT,
                 request_timeout=UPSTREAM_REQUEST_TIMEOUT,
+                allow_nonstandard_methods=True
             )
             response = await client.fetch(req)
             # Handle the response
