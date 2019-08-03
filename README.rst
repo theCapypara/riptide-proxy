@@ -51,6 +51,14 @@ Proxy Server
 This repository implements a HTTP(s) and WebSocket reverse proxy server for use with Riptide projects.
 It supports auto-starting of Riptide projects. Routing of projects is based on hostnames.
 
+for-docs Branch
+---------------
+
+The for-docs branch should always be based on master. It contains only one commit that removes
+python-prctl and certauth from the dependencies for Read the Docs, since rtd can't install them.
+
+If anyone knows of a better way to do this, please let me know.
+
 Documentation
 -------------
 
