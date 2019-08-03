@@ -20,9 +20,7 @@ setup(
     install_requires=[
         'riptide-lib >= 0.6, < 0.7',
         'tornado >= 6.0',
-        'Click >= 7.0',
-        'python-prctl >= 1.7; sys_platform == "linux"',
-        'certauth >= 1.3'
+        'Click >= 7.0'
     ],
     extras_require={
         'profiling':  ["guppy3>=3.0.9"]
