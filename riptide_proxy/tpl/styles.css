@@ -17,7 +17,7 @@ body > div {
 #ct {
     background: white;
     margin-top: 20px;
-    width: 30em;
+    width: 40em;
     padding: 2em;
     border-radius: 1em;
     -webkit-box-shadow: 0 0 37px 1px rgba(0,0,0,0.07);
@@ -25,7 +25,7 @@ body > div {
     box-shadow: 0 0 37px 1px rgba(0,0,0,0.07);
 }
 
-@media only screen and (max-width: 30em) {
+@media only screen and (max-width: 40em) {
   #ct {
     width: auto;
   }
@@ -150,7 +150,14 @@ hr {
 
 #error-warning {
     display: none;
+}
+
+.load-error, #error-warning {
     background: #ff9079;
     padding: 5px;
     border: 1px solid #e31a29;
+}
+
+.load-error {
+    margin: 10px;
 }

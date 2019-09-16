@@ -1,8 +1,13 @@
 <h3>Services of {{ project["name"] }}:</h3>
-<ul>
+<ul class="service-list">
+    {% set has_service = False %}
     {% for service in project["app"]["services"].values() %}
         {% if "port" in service %}
+            {% set has_service = True %}
             <li>{{ service['$name'] }}: <a href="//{{ service.domain() }}">//{{ service.domain() }}</a></li>
         {% end %}
+    {% end %}
+    {% if not has_service %}
+        <li><em>This project has no services.</em></li>
     {% end %}
 </ul>

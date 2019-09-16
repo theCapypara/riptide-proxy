@@ -33,7 +33,7 @@ import traceback
 
 from riptide.config.document.project import Project
 from riptide.config.loader import load_projects
-from riptide_proxy.project_loader import get_all_projects, resolve_project, ResolveStatus
+from riptide_proxy.project_loader import get_all_projects, resolve_project, ResolveStatus, ProjectLoadError
 from riptide_proxy import UPSTREAM_REQUEST_TIMEOUT, UPSTREAM_CONNECT_TIMEOUT, LOGGER_NAME
 
 logger = logging.getLogger(LOGGER_NAME)
@@ -101,6 +101,9 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
             else:  # rc == ResolveStatus.NO_PROJECT
                 return self.pp_landing_page()
 
+        except ProjectLoadError as err:
+            # Project could not be loaded
+            self.pp_500_project_load(err)
         except Exception as err:
             # Unknown error happened, tell the user.
             self.pp_500(err, traceback.format_exc())
@@ -217,19 +220,26 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
     def pp_landing_page(self):
         """ Display the landing page """
         self.set_status(200)
+        all_projects, load_errors = get_all_projects(self.runtime_storage)
         self.render("pp_landing_page.html", title="Riptide Proxy", base_url=self.config["url"],
-                    all_projects=get_all_projects(self.runtime_storage))
+                    all_projects=all_projects, load_errors=[self.format_load_error(error) for error in load_errors])
 
     def pp_500(self, err, trace):
         """ Display a generic error page """
         self.set_status(500)
         logger.exception(err)
-        self.render("pp_500.html", title="Riptide Proxy - 500 Internal Server Error", trace=trace, err=err)
+        self.render("pp_500.html", title="Riptide Proxy - 500 Internal Server Error", trace=trace, err=err, base_url=self.config["url"])
+
+    def pp_500_project_load(self, err):
+        """ Display project load error page """
+        self.set_status(500)
+        logger.error(str(err))
+        self.render("pp_500_project_load.html", title="Riptide Proxy - Error loading project", trace=self.format_load_error(err), project=err.project_name, base_url=self.config["url"])
 
     def pp_502(self, err):
         """ Display a Bad Gateway error, if the upstream server sent an invalid response """
         self.set_status(502)
-        self.render("pp_502.html", title="Riptide Proxy - 502 Bad Gateway", err=err)
+        self.render("pp_502.html", title="Riptide Proxy - 502 Bad Gateway", err=err, base_url=self.config["url"])
 
     def pp_no_main_service(self, project: Project):
         """ Inform the user that the project has no main service, and list available services. """
@@ -244,7 +254,7 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
     def pp_start_project(self, project: Project, resolved_service_name):
         """ Start the auto start procedure for a project """
         self.set_status(200)
-        self.render("pp_start_project.html", title="Riptide Proxy - Starting...", project=project, service_name=resolved_service_name)
+        self.render("pp_start_project.html", title="Riptide Proxy - Starting...", project=project, service_name=resolved_service_name, base_url=self.config["url"])
 
     def pp_project_not_started(self, project: Project, resolved_service_name):
         """ Inform the user, that the requested service is not started. """
@@ -255,10 +265,22 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
         """ Inform the user, that the requested project was not found, and display a list of all projects. """
         self.set_status(400)
         self.render("pp_project_not_found.html", title="Riptide Proxy - Project Not Found",
-                    project_name=project_name, base_url=self.config["url"],
-                    all_projects=get_all_projects(self.runtime_storage))
+                    project_name=project_name, base_url=self.config["url"])
 
     def pp_gateway_timeout(self, project, service_name, address):
         """ Inform the user of a Gateway Timeout and possible reasons for this. """
         self.set_status(504)
-        self.render("pp_gateway_timeout.html", title="Riptide Proxy - Gateway Timeout", project=project, service_name=service_name)
+        self.render("pp_gateway_timeout.html", title="Riptide Proxy - Gateway Timeout", project=project, service_name=service_name, base_url=self.config["url"])
+
+    def format_load_error(self, err: ProjectLoadError):
+        """ Formats ProjectLoadErrors for display """
+        stack = [str(err)]
+        current_err = err
+        previous_message = str(err)
+        while current_err.__context__ is not None:
+            current_err = current_err.__context__
+            # Filter duplicate exception messages. 'schema' used by configcrunch does that for example.
+            if previous_message != str(current_err):
+                stack.append('>> Caused by %s' % str(current_err))
+            previous_message = str(current_err)
+        return stack

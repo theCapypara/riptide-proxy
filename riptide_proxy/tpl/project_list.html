@@ -1,6 +1,16 @@
 <hr>
 <h2>All projects:</h2>
-<p><em>Note: You need to run the Riptide CLI once for projects to appear here.</em></p>
 {% for project in all_projects %}
     {% include 'service_list.html' %}
+{% end %}
+<hr>
+{% if len(load_errors) > 0 %}
+    <h2>Load errors:</h2>
+    {% for error in load_errors %}
+        <div class="load-error">
+            {{ error[0] }}
+            <pre class="details"><code>{{ '\n'.join(error[1:]) }}</code></pre>
+        </div>
+    {% end %}
+<p><em>Tip: You can remove old or broken projects by calling <code>riptide project-remove name</code></em></p>
 {% end %}

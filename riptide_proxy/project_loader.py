@@ -32,6 +32,15 @@ class ResolveStatus(Enum):
     NOT_STARTED_AUTOSTART = 5
     PROJECT_NOT_FOUND = 6
 
+
+class ProjectLoadError(Exception):
+    def __init__(self, project_name: str) -> None:
+        self.project_name = project_name
+
+    def __str__(self):
+        return "Error loading project " + self.project_name
+
+
 def resolve_project(hostname, base_url: str,
                     engine: AbstractEngine, runtime_storage: RuntimeStorage, autostart=True
                     ) -> Tuple[ResolveStatus, any]:
@@ -45,7 +54,7 @@ def resolve_project(hostname, base_url: str,
     :param base_url: The configured proxy base url
     :param autostart: Whether or not autostart is enabled
 
-    :raises  Exception: May raise any exception, please implement error handling.
+    :raises  ProjectLoadError: On project load error
     :return: Depending on the result, this function may return various things.
 
              The format is always a tuple of ``ResolveStatus`` and a data object:
@@ -112,20 +121,37 @@ def resolve_project(hostname, base_url: str,
         return ResolveStatus.PROJECT_NOT_FOUND, project_name
 
 
-def get_all_projects(runtime_storage) -> List[Project]:
+def get_all_projects(runtime_storage) -> Tuple[List[Project], List[ProjectLoadError]]:
     """Loads all projects that are found in the projects.json. Always reloads all projects."""
     logger.debug("Project listing: Requested. Reloading all projects.")
     runtime_storage.projects_mapping = load_projects()
     current_time = time.time()
+    errors = []
     for project_name, project_file in runtime_storage.projects_mapping.items():
         logger.debug("Project listing: Processing %s : %s" % (project_name, project_file))
         try:
-            project = load_config(project_file)["project"]
-            runtime_storage.project_cache[project_file] = [project, current_time]
-        except Exception as err:
-            # Project could not be loaded
-            logger.warn("Project listing: Could not load %s. Reason: %s" % (project_name, str(err)))
-    return [tupl[0] for tupl in runtime_storage.project_cache.values()]
+            try:
+                project = _load_single_project(project_file)
+                runtime_storage.project_cache[project_file] = [project, current_time]
+            except FileNotFoundError as ex:
+                # Project not found
+                raise ProjectLoadError(project_name) from ex
+            except Exception as ex:
+                # Load error :(
+                logger.warning("Project listing: Could not load %s. Reason: %s" % (project_name, str(ex)))
+                # TODO: This is a bit ugly...
+                raise ProjectLoadError(project_name) from ex
+        except ProjectLoadError as load_error:
+            errors.append(load_error)
+
+    return [tupl[0] for tupl in runtime_storage.project_cache.values()], errors
+
+
+def _load_single_project(project_file):
+    config = load_config(project_file)
+    if "project" in config:
+        return config["project"]
+    raise FileNotFoundError("Project file (%s) not found." % project_file)
 
 
 def _extract_names_from(hostname, base_url) -> Tuple[Union[str, None], Union[str, None]]:
@@ -184,9 +210,12 @@ def load_project_and_service(project_name, service_name, runtime_storage: Runtim
         try:
             project = load_config(project_file)["project"]
             project_cache[project_file] = [project, current_time]
-        except Exception:
+        except FileNotFoundError as ex:
             # Project not found
             return None, None
+        except Exception as ex:
+            # Load error :(
+            raise ProjectLoadError(project_name) from ex
     else:
         project = project_cache[project_file][0]
         project_cache[project_file][1] = current_time

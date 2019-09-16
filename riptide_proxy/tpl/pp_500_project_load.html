@@ -1,0 +1,6 @@
+{% include 'head.html' %}
+<h1>Error loading project '{{ project }}'</h1>
+<p>Run <code>riptide status -v</code> for a detailed stack trace.</p>
+<pre><code>{{ '\n'.join(trace) }}</code></pre>
+{% include 'back_to_front.html' %}
+{% include 'foot.html' %}
