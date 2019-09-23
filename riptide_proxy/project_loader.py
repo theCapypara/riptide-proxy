@@ -97,7 +97,10 @@ def resolve_project(hostname, base_url: str,
             # Service could not be loaded :(
             if not request_service_name:
                 # ...but no service was specified. So instead: Load main service
-                resolved_service_name = project["app"].get_service_by_role("main")["$name"]
+                resolved_service_name = None
+                main_service_obj = project["app"].get_service_by_role("main")
+                if main_service_obj:
+                    resolved_service_name = main_service_obj["$name"]
                 if not resolved_service_name:
                     # Nope, main service could also not be loaded
                     return ResolveStatus.NO_MAIN_SERVICE, (project, request_service_name)
