@@ -20,7 +20,6 @@ setup(
         'riptide-lib >= 0.3, < 0.4',
         'tornado >= 6.0',
         'Click >= 7.0',
-        'recordclass >= 0.12',
         'python-prctl >= 1.7; sys_platform == "linux"',
         'certauth >= 1.3'
     ],

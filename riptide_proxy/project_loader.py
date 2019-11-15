@@ -3,8 +3,7 @@ import time
 
 import logging
 from enum import Enum
-from recordclass import RecordClass
-from typing import Tuple, Union, Dict, List
+from typing import Tuple, Union, Dict, List, NamedTuple
 
 from riptide.config.document.project import Project
 from riptide.config.document.service import Service, DOMAIN_PROJECT_SERVICE_SEP
@@ -15,7 +14,12 @@ from riptide_proxy import PROJECT_CACHE_TIMEOUT, LOGGER_NAME, CNT_ADRESS_CACHE_T
 logger = logging.getLogger(LOGGER_NAME)
 
 
-class RuntimeStorage(RecordClass):
+class RuntimeStorage:
+    def __init__(self, projects_mapping: Dict, project_cache: Dict, ip_cache: Dict):
+        self.projects_mapping = projects_mapping
+        self.project_cache = project_cache
+        self.ip_cache = ip_cache
+
     projects_mapping: Dict
     # A cache of projects. Contains a mapping (project file path) => [project object, age]
     project_cache: Dict
