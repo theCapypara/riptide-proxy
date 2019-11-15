@@ -64,7 +64,7 @@ def main(user, loglevel, version=False):
         system_config = Config.from_yaml(config_path)
         system_config.validate()
     except FileNotFoundError as e:
-        raise ClickException("Main config file not found. Run riptide config:create:user.") from e
+        raise ClickException("Main config file not found. Run riptide config-edit-user.") from e
     except Exception as e:
         raise ClickException("Error reading configuration.") from e
 
