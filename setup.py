@@ -18,11 +18,11 @@ setup(
     url='https://github.com/Parakoopa/riptide-proxy/',
     install_requires=[
         'riptide-lib >= 0.3, < 0.4',
-        'tornado >= 5.1',
+        'tornado >= 6.0',
         'Click >= 7.0',
-        'recordclass >= 0.7',
+        'recordclass >= 0.12',
         'python-prctl >= 1.7; sys_platform == "linux"',
-        'certauth >= 1.2'
+        'certauth >= 1.3'
     ],
     classifiers=[
         'Development Status :: 3 - Alpha',
@@ -31,6 +31,7 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
     ],
     entry_points='''
         [console_scripts]
