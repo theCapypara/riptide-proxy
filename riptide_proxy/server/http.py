@@ -281,6 +281,6 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
             current_err = current_err.__context__
             # Filter duplicate exception messages. 'schema' used by configcrunch does that for example.
             if previous_message != str(current_err):
-                stack.append('>> Caused by %s' % str(current_err))
+                stack.append(f'>> Caused by {str(current_err)}')
             previous_message = str(current_err)
         return stack

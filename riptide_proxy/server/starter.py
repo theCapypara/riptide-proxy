@@ -22,8 +22,10 @@ def run_proxy(system_config, engine, http_port, https_port, ssl_options, start_i
     the tornado IOLoop will be started immediately.
     """
 
-    logger.info("Starting Riptide Proxy on HTTP: http://%s:%d"
-                % (system_config["proxy"]["url"], system_config["proxy"]["ports"]["http"]))
+    logger.info(
+        f"Starting Riptide Proxy on HTTP: "
+        f"http://{system_config['proxy']['url']}:{system_config['proxy']['ports']['http']:d}"
+    )
 
     # Load projects initially
     projects = load_projects()
@@ -50,8 +52,10 @@ def run_proxy(system_config, engine, http_port, https_port, ssl_options, start_i
 
     # Prepare HTTPS
     if https_port:
-        logger.info("Starting Riptide Proxy on HTTPS: https://%s:%d"
-                    % (system_config["proxy"]["url"], system_config["proxy"]["ports"]["https"]))
+        logger.info(
+            f"Starting Riptide Proxy on HTTPS: "
+            f"https://{system_config['proxy']['url']}:{system_config['proxy']['ports']['https']:d}"
+        )
         https_app = tornado.httpserver.HTTPServer(app, ssl_options=ssl_options, xheaders=True)
         https_app.listen(https_port)
 

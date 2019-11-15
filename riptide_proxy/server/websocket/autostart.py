@@ -69,11 +69,11 @@ class AutostartHandler(websocket.WebSocketHandler):
         return True
 
     def open(self):
-        logger.debug('WS: Connection from %s. Waiting for project name...' % self.request.remote_ip)
+        logger.debug(f'WS: Connection from {self.request.remote_ip}. Waiting for project name...')
 
     def on_close(self):
         if self.project:
-            logger.debug('WS: Connection from %s for %s CLOSED' % (self.request.remote_ip, self.project["name"]))
+            logger.debug('WS: Connection from {} for {} CLOSED'.format(self.request.remote_ip, self.project["name"]))
 
             # Remove from list of clients
             if self in self.__class__.clients:
@@ -91,7 +91,7 @@ class AutostartHandler(websocket.WebSocketHandler):
 
             self.project = project
 
-            logger.debug('WS: Connection from %s for %s' % (self.request.remote_ip, self.project["name"]))
+            logger.debug('WS: Connection from {} for {}'.format(self.request.remote_ip, self.project["name"]))
 
             # Add to list of clients
             if self not in self.__class__.clients:
@@ -104,7 +104,7 @@ class AutostartHandler(websocket.WebSocketHandler):
         # Start the registered project
         elif decoded_message['method'] == "start" and self.project:  # {method: start}
             p_name = self.project["name"]
-            logger.debug('WS: Start Request for %s from %s' % (p_name, self.request.remote_ip))
+            logger.debug(f'WS: Start Request for {p_name} from {self.request.remote_ip}')
             if not self.__class__.running:
                 logger.debug('WS: STARTING project %s!', p_name)
                 self.__class__.running = True

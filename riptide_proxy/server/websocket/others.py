@@ -31,30 +31,31 @@ class ProxyWebsocketHandler(websocket.WebSocketHandler):
 
         try:
 
-            logger.debug("Incoming WebSocket Proxy request for %s" % self.request.host)
+            logger.debug(f"Incoming WebSocket Proxy request for {self.request.host}")
 
             rc, data = resolve_project(self.request.host, self.config["url"],
                                        self.engine, self.runtime_storage, self.config['autostart'])
 
             if rc == ResolveStatus.NO_MAIN_SERVICE:
                 project, request_service_name = data
-                logger.warning("WebSocket Proxy: No main service for %s, %s" % (project['name'], request_service_name))
+                logger.warning(f"WebSocket Proxy: No main service for {project['name']}, {request_service_name}")
                 self.close(ERR_BAD_GATEWAY)
 
             elif rc == ResolveStatus.SERVICE_NOT_FOUND:
                 project, request_service_name = data
-                logger.warning("WebSocket Proxy: Service not found for %s, %s" % (project['name'], request_service_name))
+                logger.warning(f"WebSocket Proxy: Service not found for {project['name']}, {request_service_name}")
                 self.close(ERR_BAD_GATEWAY)
 
             elif rc == ResolveStatus.NOT_STARTED or rc == ResolveStatus.NOT_STARTED_AUTOSTART:
                 project, resolved_service_name = data
-                logger.warning("WebSocket Proxy: Had no ip for %s, %s. Not started?"
-                               % (project['name'], resolved_service_name))
+                logger.warning(
+                    f"WebSocket Proxy: Had no ip for {project['name']}, {resolved_service_name}. Not started?"
+                )
                 self.close(ERR_BAD_GATEWAY)
 
             elif rc == ResolveStatus.PROJECT_NOT_FOUND:
                 project_name = data
-                logger.warning("WebSocket Proxy: Project not found for %s" % project_name)
+                logger.warning(f"WebSocket Proxy: Project not found for {project_name}")
                 self.close(ERR_BAD_GATEWAY)
                 return
 
@@ -63,12 +64,12 @@ class ProxyWebsocketHandler(websocket.WebSocketHandler):
                 return
 
         except Exception as err:
-            logger.warning("Errror during WebSocket proxy for %s: %s." % (self.request.host, str(err)))
+            logger.warning(f"Errror during WebSocket proxy for {self.request.host}: {str(err)}.")
             self.close(ERR_BAD_GATEWAY)
             return
 
         if rc != ResolveStatus.SUCCESS:
-            logger.warning("WebSocket Proxy: Unknown status: %d" % rc)
+            logger.warning(f"WebSocket Proxy: Unknown status: {rc:d}")
             self.close(ERR_BAD_GATEWAY)
             return
 

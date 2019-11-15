@@ -19,8 +19,8 @@ logger = logging.getLogger(LOGGER_NAME)
 
 
 def print_version():
-    echo("riptide_lib: %s" % get_riptide_version_raw())
-    echo("riptide_proxy: %s" % pkg_resources.get_distribution("riptide_proxy").version)
+    echo(f"riptide_lib: {get_riptide_version_raw()}")
+    echo(f"riptide_proxy: {pkg_resources.get_distribution('riptide_proxy').version}")
 
 
 @click.command()
@@ -52,7 +52,7 @@ def main(user, loglevel, version=False):
         if os.getuid() == 0:
             if not user:
                 raise ClickException("--user parameter required when running as root.")
-            logger.info("Was running as root. Changing user to %s." % user)
+            logger.info(f"Was running as root. Changing user to {user}.")
             drop_privileges(user)
     except AttributeError:
         # Windows. Ignore.

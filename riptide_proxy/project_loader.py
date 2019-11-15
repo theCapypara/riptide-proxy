@@ -131,7 +131,7 @@ def get_all_projects(runtime_storage) -> Tuple[List[Project], List[ProjectLoadEr
     current_time = time.time()
     errors = []
     for project_name, project_file in runtime_storage.projects_mapping.items():
-        logger.debug("Project listing: Processing %s : %s" % (project_name, project_file))
+        logger.debug(f"Project listing: Processing {project_name} : {project_file}")
         try:
             try:
                 project = _load_single_project(project_file)
@@ -141,7 +141,7 @@ def get_all_projects(runtime_storage) -> Tuple[List[Project], List[ProjectLoadEr
                 raise ProjectLoadError(project_name) from ex
             except Exception as ex:
                 # Load error :(
-                logger.warning("Project listing: Could not load %s. Reason: %s" % (project_name, str(ex)))
+                logger.warning(f"Project listing: Could not load {project_name}. Reason: {str(ex)}")
                 # TODO: This is a bit ugly...
                 raise ProjectLoadError(project_name) from ex
         except ProjectLoadError as load_error:
@@ -154,7 +154,7 @@ def _load_single_project(project_file):
     config = load_config(project_file)
     if "project" in config:
         return config["project"]
-    raise FileNotFoundError("Project file (%s) not found." % project_file)
+    raise FileNotFoundError(f"Project file ({project_file}) not found.")
 
 
 def _extract_names_from(hostname, base_url) -> Tuple[Union[str, None], Union[str, None]]:
@@ -200,7 +200,7 @@ def load_project_and_service(project_name, service_name, runtime_storage: Runtim
         # Try to reload. Maybe it was added?
         runtime_storage.projects_mapping = load_projects()
         if project_name not in runtime_storage.projects_mapping:
-            logger.debug('Could not find project %s' % project_name)
+            logger.debug(f'Could not find project {project_name}')
             # Project not found
             return None, None
 
@@ -209,7 +209,7 @@ def load_project_and_service(project_name, service_name, runtime_storage: Runtim
     project_file = runtime_storage.projects_mapping[project_name]
     project_cache = runtime_storage.project_cache
     if project_file not in project_cache or current_time - project_cache[project_file][1] > PROJECT_CACHE_TIMEOUT:
-        logger.debug('Loading project file for %s at %s' % (project_name, project_file))
+        logger.debug(f'Loading project file for {project_name} at {project_file}')
         try:
             project = load_config(project_file)["project"]
             project_cache[project_file] = [project, current_time]
@@ -235,7 +235,7 @@ def _resolve_container_address(project, service_name, engine, runtime_storage):
     ip_cache = runtime_storage.ip_cache
     if key not in ip_cache or current_time - ip_cache[key][1] > CNT_ADRESS_CACHE_TIMEOUT:
         address = engine.address_for(project, service_name)
-        logger.debug('Got container address for %s: %s' % (key, address))
+        logger.debug(f'Got container address for {key}: {address}')
         if address:
             address = "http://" + address[0] + ":" + str(address[1])
             # Only cache if we actually got something.
