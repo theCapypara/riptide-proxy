@@ -12,6 +12,7 @@
     *Database Drivers:*     db_mysql_
     *Related Projects:*     configcrunch_
     *More:*                 docs_                repo_                docker_images_
+    \                       mission_control_
     ======================  ===================  ===================  ===================
 
 .. _lib:            https://github.com/Parakoopa/riptide-lib
@@ -23,8 +24,9 @@
 .. _docs:           https://github.com/Parakoopa/riptide-docs
 .. _repo:           https://github.com/Parakoopa/riptide-repo
 .. _docker_images:  https://github.com/Parakoopa/riptide-docker-images
+.. _mission_control: https://github.com/Parakoopa/riptide-mission-control
 
-|build| |docs|
+|build| |docs| |slack|
 
 .. |build| image:: https://jenkins.riptide.parakoopa.de/buildStatus/icon?job=riptide-proxy%2Fmaster
     :target: https://jenkins.riptide.parakoopa.de/blue/organizations/jenkins/riptide-proxy/activity
@@ -33,6 +35,10 @@
 .. |docs| image:: https://readthedocs.org/projects/riptide-docs/badge/?version=latest
     :target: https://riptide-docs.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
+
+.. |slack| image:: https://slack.riptide.parakoopa.de/badge.svg
+    :target: https://slack.riptide.parakoopa.de
+    :alt: Join our Slack workspace
 
 Riptide is a set of tools to manage development environments for web applications.
 It's using container virtualization tools, such as `Docker <https://www.docker.com/>`_
@@ -50,6 +56,9 @@ Proxy Server
 
 This repository implements a HTTP(s) and WebSocket reverse proxy server for use with Riptide projects.
 It supports auto-starting of Riptide projects. Routing of projects is based on hostnames.
+
+If ``riptide-mission-control`` is installed, a proxy server for it is started at ``control.riptide.local``
+(where riptide.local is your configured proxy server URL).
 
 for-docs Branch
 ---------------
