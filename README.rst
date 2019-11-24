@@ -26,7 +26,7 @@
 .. _docker_images:  https://github.com/Parakoopa/riptide-docker-images
 .. _mission_control: https://github.com/Parakoopa/riptide-mission-control
 
-|build| |docs| |slack|
+|build| |docs| |pypi-version| |pypi-downloads| |pypi-license| |pypi-pyversions| |slack|
 
 .. |build| image:: https://jenkins.riptide.parakoopa.de/buildStatus/icon?job=riptide-proxy%2Fmaster
     :target: https://jenkins.riptide.parakoopa.de/blue/organizations/jenkins/riptide-proxy/activity
@@ -39,6 +39,20 @@
 .. |slack| image:: https://slack.riptide.parakoopa.de/badge.svg
     :target: https://slack.riptide.parakoopa.de
     :alt: Join our Slack workspace
+
+.. |pypi-version| image:: https://img.shields.io/pypi/v/riptide-proxy
+    :target: https://pypi.org/project/riptide-proxy/
+    :alt: Version
+
+.. |pypi-downloads| image:: https://img.shields.io/pypi/dm/riptide-proxy
+    :target: https://pypi.org/project/riptide-proxy/
+    :alt: Downloads
+
+.. |pypi-license| image:: https://img.shields.io/pypi/l/riptide-proxy
+    :alt: License (MIT)
+
+.. |pypi-pyversions| image:: https://img.shields.io/pypi/pyversions/riptide-proxy
+    :alt: Supported Python versions
 
 Riptide is a set of tools to manage development environments for web applications.
 It's using container virtualization tools, such as `Docker <https://www.docker.com/>`_
