@@ -9,7 +9,7 @@ with open(path.join(this_directory, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='riptide-proxy',
-    version='0.3.4',
+    version='0.3.8',
     packages=find_packages(),
     package_data={'riptide_proxy': ['tpl/*']},
     description='Tool to manage development environments for web applications using containers - HTTP and WebSocket Reverse Proxy Server',

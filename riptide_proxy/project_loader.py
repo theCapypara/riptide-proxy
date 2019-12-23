@@ -172,7 +172,7 @@ def _extract_names_from(hostname, base_url) -> Tuple[Union[str, None], Union[str
              if only the base url was accessed, and service may be None.
     """
     real_host = hostname.split(":")[0]
-    riptide_host_part = "".join(real_host.rsplit("." + base_url))
+    riptide_host_part = "".join(real_host.rsplit("." + base_url)).split(".")[-1]
     if riptide_host_part == base_url:
         return None, None
 
