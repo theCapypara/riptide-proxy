@@ -172,9 +172,11 @@ def _extract_names_from(hostname, base_url) -> Tuple[Union[str, None], Union[str
              if only the base url was accessed, and service may be None.
     """
     real_host = hostname.split(":")[0]
-    riptide_host_part = "".join(real_host.rsplit("." + base_url)).split(".")[-1]
+    riptide_host_part = "".join(real_host.rsplit("." + base_url))
     if riptide_host_part == base_url:
         return None, None
+    # Otherwise this should be a valid project URL, but make sure we only check the last part of the project name
+    riptide_host_part = riptide_host_part.split(".")[-1]
 
     parts = riptide_host_part.split(DOMAIN_PROJECT_SERVICE_SEP)
     project_name = parts[0]
