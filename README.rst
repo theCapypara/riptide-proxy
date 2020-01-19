@@ -10,6 +10,7 @@
     *Main packages:*        lib_                 **proxy**            cli_
     *Container-Backends:*   engine_docker_
     *Database Drivers:*     db_mysql_
+    *Plugins:*              php_xdebug_
     *Related Projects:*     configcrunch_
     *More:*                 docs_                repo_                docker_images_
     \                       mission_control_
@@ -25,6 +26,7 @@
 .. _repo:           https://github.com/Parakoopa/riptide-repo
 .. _docker_images:  https://github.com/Parakoopa/riptide-docker-images
 .. _mission_control: https://github.com/Parakoopa/riptide-mission-control
+.. _php_xdebug:     https://github.com/Parakoopa/riptide-plugin-php-xdebug
 
 |build| |docs| |pypi-version| |pypi-downloads| |pypi-license| |pypi-pyversions| |slack|
 
