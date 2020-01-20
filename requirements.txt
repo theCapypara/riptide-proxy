@@ -1,4 +1,4 @@
-riptide-lib >= 0.4, < 0.5
+riptide-lib >= 0.5, < 0.6
 tornado==6.0.3
 Click==7.0
 python-prctl==1.7; sys_platform == 'linux'
