@@ -9,7 +9,7 @@ with open(path.join(this_directory, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='riptide-proxy',
-    version='0.4.1',
+    version='0.5.0rc1',
     packages=find_packages(),
     package_data={'riptide_proxy': ['tpl/*']},
     description='Tool to manage development environments for web applications using containers - HTTP and WebSocket Reverse Proxy Server',
@@ -17,7 +17,7 @@ setup(
     long_description_content_type='text/x-rst',
     url='https://github.com/Parakoopa/riptide-proxy/',
     install_requires=[
-        'riptide-lib >= 0.4, < 0.5',
+        'riptide-lib >= 0.5rc1, < 0.6',
         'tornado >= 6.0',
         'Click >= 7.0',
         'python-prctl >= 1.7; sys_platform == "linux"',

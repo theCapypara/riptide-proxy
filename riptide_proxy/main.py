@@ -71,6 +71,7 @@ def main(user, loglevel, version=False):
     # Read engine
     try:
         engine = load_engine(system_config["engine"])
+        system_config.load_performance_options(engine)
     except NotImplementedError as ex:
         raise ClickException('Unknown engine specified in configuration.') from ex
 
