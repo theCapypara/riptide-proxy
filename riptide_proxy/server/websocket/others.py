@@ -34,7 +34,7 @@ class ProxyWebsocketHandler(websocket.WebSocketHandler):
             logger.debug(f"Incoming WebSocket Proxy request for {self.request.host}")
 
             rc, data = resolve_project(self.request.host, self.config["url"],
-                                       self.engine, self.runtime_storage, self.config['autostart'])
+                                       self.runtime_storage, self.config['autostart'])
 
             if rc == ResolveStatus.NO_MAIN_SERVICE:
                 project, request_service_name = data

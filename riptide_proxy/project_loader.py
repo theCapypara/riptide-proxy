@@ -15,16 +15,13 @@ logger = logging.getLogger(LOGGER_NAME)
 
 
 class RuntimeStorage:
-    def __init__(self, projects_mapping: Dict, project_cache: Dict, ip_cache: Dict):
+    def __init__(self, projects_mapping: Dict, project_cache: Dict, ip_cache: Dict, engine: AbstractEngine):
         self.projects_mapping = projects_mapping
+        # A cache of projects. Contains a mapping (project file path) => [project object, age]
         self.project_cache = project_cache
+        # A cache of ip addresses for services. Contains a mapping (project_name + "__" + service_name) => [address, age]
         self.ip_cache = ip_cache
-
-    projects_mapping: Dict
-    # A cache of projects. Contains a mapping (project file path) => [project object, age]
-    project_cache: Dict
-    # A cache of ip addresses for services. Contains a mapping (project_name + "__" + service_name) => [address, age]
-    ip_cache: Dict
+        self.engine = engine
 
 
 class ResolveStatus(Enum):
@@ -45,15 +42,13 @@ class ProjectLoadError(Exception):
         return "Error loading project " + self.project_name
 
 
-def resolve_project(hostname, base_url: str,
-                    engine: AbstractEngine, runtime_storage: RuntimeStorage, autostart=True
+def resolve_project(hostname, base_url: str, runtime_storage: RuntimeStorage, autostart=True
                     ) -> Tuple[ResolveStatus, any]:
     """
     Resolve the project and service based on the the hostname, base url
     and available Riptide projects, as reported by riptide-cli
 
     :param runtime_storage: Runtime storage object
-    :param engine: Engine to use
     :param hostname: Request hostname
     :param base_url: The configured proxy base url
     :param autostart: Whether or not autostart is enabled
@@ -114,7 +109,7 @@ def resolve_project(hostname, base_url: str,
 
         # Service and project are resolved
         # Resolve container address and proxy the request
-        address = _resolve_container_address(project, resolved_service_name, engine, runtime_storage)
+        address = _resolve_container_address(project, resolved_service_name, runtime_storage)
 
         if address:
             # PROXY
@@ -138,7 +133,7 @@ def get_all_projects(runtime_storage) -> Tuple[List[Project], List[ProjectLoadEr
         logger.debug(f"Project listing: Processing {project_name} : {project_file}")
         try:
             try:
-                project = _load_single_project(project_file)
+                project = _load_single_project(project_file, runtime_storage.engine)
                 runtime_storage.project_cache[project_file] = [project, current_time]
             except FileNotFoundError as ex:
                 # Project not found
@@ -154,8 +149,9 @@ def get_all_projects(runtime_storage) -> Tuple[List[Project], List[ProjectLoadEr
     return [tupl[0] for tupl in runtime_storage.project_cache.values()], errors
 
 
-def _load_single_project(project_file):
+def _load_single_project(project_file, engine):
     config = load_config(project_file)
+    config.load_performance_options(engine)
     if "project" in config:
         return config["project"]
     raise FileNotFoundError(f"Project file ({project_file}) not found.")
@@ -217,7 +213,7 @@ def load_project_and_service(project_name, service_name, runtime_storage: Runtim
     if project_file not in project_cache or current_time - project_cache[project_file][1] > PROJECT_CACHE_TIMEOUT:
         logger.debug(f'Loading project file for {project_name} at {project_file}')
         try:
-            project = load_config(project_file)["project"]
+            project = _load_single_project(project_file, runtime_storage.engine)
             project_cache[project_file] = [project, current_time]
         except FileNotFoundError as ex:
             # Project not found
@@ -235,12 +231,12 @@ def load_project_and_service(project_name, service_name, runtime_storage: Runtim
     return project, None
 
 
-def _resolve_container_address(project, service_name, engine, runtime_storage):
+def _resolve_container_address(project, service_name, runtime_storage):
     key = project["name"] + DOMAIN_PROJECT_SERVICE_SEP + service_name
     current_time = time.time()
     ip_cache = runtime_storage.ip_cache
     if key not in ip_cache or current_time - ip_cache[key][1] > CNT_ADRESS_CACHE_TIMEOUT:
-        address = engine.address_for(project, service_name)
+        address = runtime_storage.engine.address_for(project, service_name)
         logger.debug(f'Got container address for {key}: {address}')
         if address:
             address = "http://" + address[0] + ":" + str(address[1])

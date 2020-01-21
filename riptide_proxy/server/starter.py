@@ -66,7 +66,7 @@ def run_proxy(system_config: Config, engine: AbstractEngine, http_port, https_po
     storage = {
         "config": system_config["proxy"],
         "engine": engine,
-        "runtime_storage": RuntimeStorage(projects_mapping=projects, project_cache={}, ip_cache={})
+        "runtime_storage": RuntimeStorage(projects_mapping=projects, project_cache={}, ip_cache={}, engine=engine)
     }
 
     # Configure Routes

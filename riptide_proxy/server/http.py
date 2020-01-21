@@ -71,7 +71,7 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
         try:
 
             rc, data = resolve_project(self.request.host, self.config["url"],
-                                       self.engine, self.runtime_storage, self.config['autostart'])
+                                       self.runtime_storage, self.config['autostart'])
 
             if rc == ResolveStatus.SUCCESS:
                 project, resolved_service_name, address = data
