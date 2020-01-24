@@ -254,7 +254,18 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
     def pp_start_project(self, project: Project, resolved_service_name):
         """ Start the auto start procedure for a project """
         self.set_status(200)
-        self.render("pp_start_project.html", title="Riptide Proxy - Starting...", project=project, service_name=resolved_service_name, base_url=self.config["url"])
+        # Either start all or the defined default services
+        if "default_services" in project:
+            services_to_start = project["default_services"]
+        else:
+            services_to_start = project["app"]["services"].keys()
+        # If the resolved service name is not in the list of services to start, show the start error page instead,
+        # TODO: Extend autostart for this
+        if resolved_service_name not in services_to_start:
+            return self.pp_project_not_started(project, resolved_service_name)
+        self.render("pp_start_project.html", title="Riptide Proxy - Starting...", services_to_start=services_to_start,
+                    project=project, service_name=resolved_service_name, base_url=self.config["url"]
+                    )
 
     def pp_project_not_started(self, project: Project, resolved_service_name):
         """ Inform the user, that the requested service is not started. """

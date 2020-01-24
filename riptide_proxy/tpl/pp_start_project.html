@@ -6,7 +6,7 @@
 <p id="stuck-warning">If the process is stuck and you wish to reset it, run riptide stop and restart the proxy server.</p>
 <p id="error-warning">Startup of one or more services failed.</p>
 <div id="autostart-table">
-    {% for service in project["app"]["services"].keys() %}
+    {% for service in services_to_start %}
         <div class="at-entry" data-service="{{ service }}">
             <div class="at-row">
                 <div class="at-col col-name">{{ service }}</div>

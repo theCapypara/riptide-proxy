@@ -110,7 +110,11 @@ class AutostartHandler(websocket.WebSocketHandler):
                 self.__class__.running = True
                 had_an_error = False
                 try:
-                    services = self.project["app"]["services"].keys()
+                    # Either start all or the defined default services
+                    if "default_services" in self.project:
+                        services = self.project["default_services"]
+                    else:
+                        services = self.project["app"]["services"].keys()
                     async for service_name, status, finished in self.engine.start_project(self.project, services):
                         for client in self.__class__.clients[p_name]:
                             try_write(client, json.dumps(build_status_answer(service_name, status, finished)))
