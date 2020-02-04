@@ -2,10 +2,11 @@ import json
 import logging
 from tornado import websocket
 
+from riptide_proxy import LOGGER_NAME
 from riptide_proxy.project_loader import load_project_and_service
 from riptide_proxy.server.websocket import ERR_BAD_GATEWAY
 
-logger = logging.getLogger('tornado_proxy')
+logger = logging.getLogger(LOGGER_NAME)
 
 
 def try_write(client, msg):
@@ -69,11 +70,11 @@ class AutostartHandler(websocket.WebSocketHandler):
         return True
 
     def open(self):
-        logger.debug(f'WS: Connection from {self.request.remote_ip}. Waiting for project name...')
+        logger.debug(f'Autostart WS: Connection from {self.request.remote_ip}. Waiting for project name...')
 
     def on_close(self):
         if self.project:
-            logger.debug('WS: Connection from {} for {} CLOSED'.format(self.request.remote_ip, self.project["name"]))
+            logger.debug('Autostart WS: Connection from {} for {} CLOSED'.format(self.request.remote_ip, self.project["name"]))
 
             # Remove from list of clients
             if self in self.__class__.clients:
@@ -91,7 +92,7 @@ class AutostartHandler(websocket.WebSocketHandler):
 
             self.project = project
 
-            logger.debug('WS: Connection from {} for {}'.format(self.request.remote_ip, self.project["name"]))
+            logger.debug('Autostart WS: Connection from {} for {}'.format(self.request.remote_ip, self.project["name"]))
 
             # Add to list of clients
             if self not in self.__class__.clients:
@@ -104,9 +105,9 @@ class AutostartHandler(websocket.WebSocketHandler):
         # Start the registered project
         elif decoded_message['method'] == "start" and self.project:  # {method: start}
             p_name = self.project["name"]
-            logger.debug(f'WS: Start Request for {p_name} from {self.request.remote_ip}')
+            logger.debug(f'Autostart WS: Start Request for {p_name} from {self.request.remote_ip}')
             if not self.__class__.running:
-                logger.debug('WS: STARTING project %s!', p_name)
+                logger.debug('Autostart WS: STARTING project %s!', p_name)
                 self.__class__.running = True
                 had_an_error = False
                 try:
@@ -121,17 +122,17 @@ class AutostartHandler(websocket.WebSocketHandler):
                         if status and finished:
                             had_an_error = True
                 except Exception as err:
-                    logger.warning('WS: Project %s start ERROR: %s', (p_name, str(err)))
+                    logger.warning('Autostart WS: Project %s start ERROR: %s', (p_name, str(err)))
                     for client in self.__class__.clients[p_name]:
                         try_write(client, json.dumps({'status': 'error', 'msg': str(err)}))
                 else:
                     if not had_an_error:
                         # Finished
-                        logger.debug('WS: Project %s STARTED!', p_name)
+                        logger.debug('Autostart WS: Project %s STARTED!', p_name)
                         for client in self.__class__.clients[p_name]:
                             try_write(client, json.dumps({'status': 'success'}))
                     else:
-                        logger.debug('WS: Project %s ERROR!', p_name)
+                        logger.debug('Autostart WS: Project %s ERROR!', p_name)
                         for client in self.__class__.clients[p_name]:
                             try_write(client, json.dumps({'status': 'failed'}))
                 self.__class__.running = False

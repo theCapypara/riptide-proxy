@@ -165,6 +165,8 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
                 allow_nonstandard_methods=True
             )
             response = await client.fetch(req)
+            # Close the connection. There seems to be an issue, where sometimes connections are not properly closed?
+            client.close()
             # Handle the response
             self.proxy_handle_response(response)
 
