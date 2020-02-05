@@ -26,6 +26,8 @@
 # THE SOFTWARE.
 
 import logging
+from asyncio import Future, CancelledError
+
 import tornado.httpclient
 import tornado.httputil
 import tornado.web
@@ -55,6 +57,15 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
         self.config = config
         self.engine = engine
         self.runtime_storage = runtime_storage
+
+        self.http_client = tornado.httpclient.AsyncHTTPClient()
+        self.running_upstream_request_future: Future = None
+
+        # Request id, only for debugging
+        self.request_id = 0
+        if logger.getEffectiveLevel() <= logging.DEBUG:
+            import random, sys
+            self.request_id = random.randint(0, sys.maxsize * 2 + 1)
 
     def compute_etag(self):
         return None  # disable tornado Etag
@@ -127,6 +138,21 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
     async def options(self):
         return await self.get()
 
+    def on_connection_close(self):
+        """
+        The connection was closed, before we finished processing. Close any running http clients (we don't
+        need to wait for requests to finish if we don't have a user listening to the response.
+        """
+        logger.debug('[R %d] connection was closed by client. Aborting.', self.request_id)
+        try:
+            if self.running_upstream_request_future is not None:
+                self.running_upstream_request_future.cancel()
+                logger.debug('[R %d] successfully canceled upstream request future.', self.request_id)
+            self.http_client.close()
+            logger.debug('[R %d] successfully closed upstream connection.', self.request_id)
+        except RuntimeError as ex:
+            logger.debug('[R %d] upstream connection was already closed (%s).', self.request_id, str(ex))
+
     async def reverse_proxy(self, project: Project, service_name: str, address: str):
         """
         Reverse-proxy the to a given address
@@ -136,9 +162,7 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
         :param address:         The address to the container, incl. port
         :return:
         """
-        logger.debug('Handle %s request to %s (%s)', self.request.method, project["name"], address)
-
-        client = tornado.httpclient.AsyncHTTPClient()
+        logger.debug('[R %d] Handle %s request to %s (%s)', self.request_id, self.request.method, project["name"], address)
 
         body = self.request.body
         headers = self.request.headers.copy()
@@ -164,20 +188,25 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
                 request_timeout=UPSTREAM_REQUEST_TIMEOUT,
                 allow_nonstandard_methods=True
             )
-            response = await client.fetch(req)
+            self.running_upstream_request_future = self.http_client.fetch(req)
+            response = await self.running_upstream_request_future
             # Close the connection. There seems to be an issue, where sometimes connections are not properly closed?
-            client.close()
+            self.http_client.close()
+            logger.debug('[R %d] done.', self.request_id)
             # Handle the response
             self.proxy_handle_response(response)
 
         except tornado.httpclient.HTTPClientError as e:
             if e.code == 599:
+                logger.debug('[R %d] error timeout.', self.request_id)
                 # Gateway Timeout
                 self.pp_gateway_timeout(project, service_name, address)
             elif hasattr(e, 'response') and e.response:
+                logger.debug('[R %d] error generic.', self.request_id)
                 # Generic HTTP error/redirect. Just forward
                 self.proxy_handle_response(e.response)
             else:
+                logger.debug('[R %d] error bad gateway.', self.request_id)
                 # Unknown error
                 self.pp_502(address)
                 return
@@ -185,6 +214,11 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
         except OSError as err:
             # No route to host / Name or service not known - Cache is probably too old
             return await self.retry_after_address_not_found_with_flushed_cache(project, service_name, err)
+
+        except CancelledError:
+            # The upstream request was canceled. This should only happen if the user has closed the connection,
+            # but in case they haven't, send a nginx-like 499 Client Closed Request.
+            self.set_status(499, "Client Closed Request")
 
     def proxy_handle_response(self, response: tornado.httpclient.HTTPResponse):
         """
@@ -226,10 +260,11 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
         self.render("pp_landing_page.html", title="Riptide Proxy", base_url=self.config["url"],
                     all_projects=all_projects, load_errors=[self.format_load_error(error) for error in load_errors])
 
-    def pp_500(self, err, trace):
+    def pp_500(self, err, trace, log_exception=True):
         """ Display a generic error page """
         self.set_status(500)
-        logger.exception(err)
+        if log_exception:
+            logger.exception(err)
         self.render("pp_500.html", title="Riptide Proxy - 500 Internal Server Error", trace=trace, err=err, base_url=self.config["url"])
 
     def pp_500_project_load(self, err):
