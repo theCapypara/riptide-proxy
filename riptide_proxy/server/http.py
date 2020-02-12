@@ -146,6 +146,12 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
         logger.debug('[R %d] connection was closed by client. Aborting.', self.request_id)
         try:
             if self.running_upstream_request_future is not None:
+                # XXX:
+                # Cancelling leads to logged errors if the request is currently running and
+                # an exception (such as a non-200 status code) is thrown. Example:
+                #     ERROR:tornado.application:Exception after Future was cancelled
+                #     tornado.httpclient.HTTPClientError: HTTP 404: Not Found
+                # Nothing we can really do about this atm.
                 self.running_upstream_request_future.cancel()
                 logger.debug('[R %d] successfully canceled upstream request future.', self.request_id)
             self.http_client.close()
@@ -219,6 +225,15 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
             # The upstream request was canceled. This should only happen if the user has closed the connection,
             # but in case they haven't, send a nginx-like 499 Client Closed Request.
             self.set_status(499, "Client Closed Request")
+
+        except RuntimeError as err:
+            if 'called on closed' in str(err):
+                # Since the closing of the connection in on_connection_close can happen in any time,
+                # there's the rare chance we run into this.
+                # We ignore this, and return the Client Closed Request code as above.
+                self.set_status(499, "Client Closed Request")
+            else:
+                raise
 
     def proxy_handle_response(self, response: tornado.httpclient.HTTPResponse):
         """
