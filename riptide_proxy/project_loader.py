@@ -126,7 +126,7 @@ def resolve_project(hostname, base_url: str, runtime_storage: RuntimeStorage, au
 def get_all_projects(runtime_storage) -> Tuple[List[Project], List[ProjectLoadError]]:
     """Loads all projects that are found in the projects.json. Always reloads all projects."""
     logger.debug("Project listing: Requested. Reloading all projects.")
-    runtime_storage.projects_mapping = load_projects()
+    runtime_storage.projects_mapping = load_projects(True)
     current_time = time.time()
     errors = []
     for project_name, project_file in runtime_storage.projects_mapping.items():
