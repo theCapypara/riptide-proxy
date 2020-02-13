@@ -1,6 +1,16 @@
 <hr>
 <h2>All projects:</h2>
+<ul class="abc-anchors">
+    {% for letter in letter_list %}
+    <li><a href="#{{ letter }}">{{ letter }}</a></li>
+    {% end %}
+</ul>
+{% set last_first_letter = '' %}
 {% for project in all_projects %}
+    {% if last_first_letter != project['name'][0].upper() %}
+        <h3 class="anchor-target" id="{{ project['name'][0].upper() }}">{{ project['name'][0].upper() }}</h3>
+    {% end %}
+    {% set last_first_letter = project['name'][0].upper() %}
     {% include 'service_list.html' %}
 {% end %}
 <hr>

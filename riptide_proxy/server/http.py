@@ -273,7 +273,9 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
         self.set_status(200)
         all_projects, load_errors = get_all_projects(self.runtime_storage)
         self.render("pp_landing_page.html", title="Riptide Proxy", base_url=self.config["url"],
-                    all_projects=all_projects, load_errors=[self.format_load_error(error) for error in load_errors])
+                    all_projects=all_projects, load_errors=[self.format_load_error(error) for error in load_errors],
+                    letter_list=sorted(set([project['name'][0].upper() for project in all_projects]))
+        )
 
     def pp_500(self, err, trace, log_exception=True):
         """ Display a generic error page """

@@ -24,6 +24,26 @@ body > div {
     -moz-box-shadow: 0 0 37px 1px rgba(0,0,0,0.07);
     box-shadow: 0 0 37px 1px rgba(0,0,0,0.07);
 }
+.abc-anchors {
+    list-style-type: none;
+    display: flex;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
+}
+.abc-anchors li a {
+    text-align: center;
+    padding: 6px;
+    text-decoration: none;
+    font-size: 1.3em;
+    text-decoration: underline;
+}
+
+.anchor-target {
+    font-size: 1.3em;
+    font-style: italic;
+    color: #333;
+}
 
 @media only screen and (max-width: 40em) {
   #ct {
