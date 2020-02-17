@@ -23,6 +23,9 @@ setup(
         'python-prctl >= 1.7; sys_platform == "linux"',
         'certauth >= 1.3'
     ],
+    extras_require={
+        'profiling':  ["guppy3>=3.0.9"]
+    },
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Programming Language :: Python',

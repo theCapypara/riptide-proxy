@@ -17,6 +17,7 @@ from riptide_proxy.server.websocket.autostart import AutostartHandler
 
 logger = logging.getLogger(LOGGER_NAME)
 RIPTIDE_MISSION_CONTROL_SUBDOMAIN = "control"
+RIPTIDE_PROFILING_SUBDOMAIN = "sys--dbg--profile"
 
 
 def load_plugin_routes(system_config: Config, engine: AbstractEngine, https_port):
@@ -40,6 +41,21 @@ def load_plugin_routes(system_config: Config, engine: AbstractEngine, https_port
             engine,
             f"{RIPTIDE_MISSION_CONTROL_SUBDOMAIN}.{system_config['proxy']['url']}"
         )
+    # Profiling
+    guppy_spec = find_spec("guppy")
+    if guppy_spec is not None:
+        from riptide_proxy.profiling import get_profiling_route
+
+        start_https_msg = ""
+        if https_port:
+            start_https_msg = f"\n    https://{RIPTIDE_PROFILING_SUBDOMAIN}.{system_config['proxy']['url']}:{system_config['proxy']['ports']['https']:d}"
+
+        logger.info(
+            f"Profiling extension guppy installed. Available att:\n"
+            f"    http://{RIPTIDE_PROFILING_SUBDOMAIN}.{system_config['proxy']['url']}:{system_config['proxy']['ports']['http']:d}{start_https_msg}"
+        )
+
+        routes += get_profiling_route(f"{RIPTIDE_PROFILING_SUBDOMAIN}.{system_config['proxy']['url']}")
     return routes
 
 
