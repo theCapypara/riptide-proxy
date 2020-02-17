@@ -38,20 +38,20 @@ class ProfileHttpHandler(tornado.web.RequestHandler):
         for i in range(0, 5):
             if i <= len(heap.bytype):
                 self.write(f"\n\n=== BYRCRS[{i}].byclodo ==\n")
-                self.write(str(heap.bytype[i].byclodo))
+                self.write(str(heap.byrcs[i].byclodo))
 
         for i in range(0, 5):
             if i <= len(heap.bytype):
                 self.write(f"\n\n=== BYRCRS[{i}].byid ==\n")
-                self.write(str(heap.bytype[i].byid))
+                self.write(str(heap.byrcs[i].byid))
 
         for i in range(0, 5):
             if i <= len(heap.bytype):
                 self.write(f"\n\n=== BYRCRS[{i}].byvia ==\n")
-                self.write(str(heap.bytype[i].byvia))
+                self.write(str(heap.byrcs[i].byvia))
 
         for i in range(0, 5):
             if i <= len(heap.bytype):
                 self.write(f"\n\n=== BYRCRS[{i}].referents ==\n")
-                self.write(str(heap.bytype[i].referents))
+                self.write(str(heap.byrcs[i].referents))
 
