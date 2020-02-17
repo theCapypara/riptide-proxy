@@ -3,6 +3,7 @@ import logging
 from tornado import websocket
 
 from riptide_proxy import LOGGER_NAME
+from riptide_proxy.autostart_restrict import check_permission
 from riptide_proxy.project_loader import load_project_and_service
 from riptide_proxy.server.websocket import ERR_BAD_GATEWAY
 
@@ -88,6 +89,11 @@ class AutostartHandler(websocket.WebSocketHandler):
             project, _ = load_project_and_service(decoded_message['project'], None, self.runtime_storage)
             if project is None:
                 self.close(ERR_BAD_GATEWAY, 'Project not found.')
+                return
+
+            # Check if client has permission for auto-start
+            if not check_permission(self.request.remote_ip, self.config):
+                self.close(ERR_BAD_GATEWAY, 'Client not allowed.')
                 return
 
             self.project = project

@@ -35,6 +35,7 @@ import traceback
 
 from riptide.config.document.project import Project
 from riptide.config.loader import load_projects
+from riptide_proxy.autostart_restrict import check_permission
 from riptide_proxy.project_loader import get_all_projects, resolve_project, ResolveStatus, ProjectLoadError
 from riptide_proxy import UPSTREAM_REQUEST_TIMEOUT, UPSTREAM_CONNECT_TIMEOUT, LOGGER_NAME
 
@@ -103,6 +104,11 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
 
             elif rc == ResolveStatus.NOT_STARTED_AUTOSTART:
                 project, resolved_service_name = data
+
+                # Check if the user is actually allowed to auto-start, otherwise display not started page.
+                if not check_permission(self.request.remote_ip, self.config):
+                    return self.pp_project_not_started(project, resolved_service_name)
+
                 return self.pp_start_project(project, resolved_service_name)
 
             elif rc == ResolveStatus.PROJECT_NOT_FOUND:
