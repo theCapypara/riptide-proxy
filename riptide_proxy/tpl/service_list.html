@@ -4,7 +4,9 @@
     {% for service in project["app"]["services"].values() %}
         {% if "port" in service %}
             {% set has_service = True %}
-            <li>{{ service['$name'] }}: <a href="//{{ service.domain() }}">//{{ service.domain() }}</a></li>
+            <li {% if service_statuses[service['$name']] %}class="started"{% end %}>
+                {{ service['$name'] }}: <a href="//{{ service.domain() }}">//{{ service.domain() }}</a>
+            </li>
         {% end %}
     {% end %}
     {% if not has_service %}

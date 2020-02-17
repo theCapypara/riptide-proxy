@@ -45,6 +45,22 @@ body > div {
     color: #333;
 }
 
+.service-list {
+  list-style: none;
+}
+
+.service-list li::before {
+  content: "\2022";
+  color: red;
+  font-weight: bold;
+  display: inline-block;
+  width: 1em;
+  margin-left: -1em;
+}
+.service-list li.started::before {
+    color: darkgreen;
+}
+
 @media only screen and (max-width: 40em) {
   #ct {
     width: auto;

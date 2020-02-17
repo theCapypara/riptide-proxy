@@ -11,6 +11,7 @@
         <h3 class="anchor-target" id="{{ project['name'][0].upper() }}">{{ project['name'][0].upper() }}</h3>
     {% end %}
     {% set last_first_letter = project['name'][0].upper() %}
+    {% set service_statuses = all_service_statuses[project['name']] %}
     {% include 'service_list.html' %}
 {% end %}
 <hr>

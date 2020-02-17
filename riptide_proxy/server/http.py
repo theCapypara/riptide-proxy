@@ -27,6 +27,7 @@
 
 import logging
 from asyncio import Future, CancelledError
+from typing import List
 
 import tornado.httpclient
 import tornado.httputil
@@ -35,6 +36,7 @@ import traceback
 
 from riptide.config.document.project import Project
 from riptide.config.loader import load_projects
+from riptide.engine.abstract import AbstractEngine
 from riptide_proxy.autostart_restrict import check_permission
 from riptide_proxy.project_loader import get_all_projects, resolve_project, ResolveStatus, ProjectLoadError
 from riptide_proxy import UPSTREAM_REQUEST_TIMEOUT, UPSTREAM_CONNECT_TIMEOUT, LOGGER_NAME
@@ -56,7 +58,7 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
         """
         super().__init__(application, request, **kwargs)
         self.config = config
-        self.engine = engine
+        self.engine: AbstractEngine = engine
         self.runtime_storage = runtime_storage
 
         self.http_client = tornado.httpclient.AsyncHTTPClient()
@@ -280,7 +282,8 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
         all_projects, load_errors = get_all_projects(self.runtime_storage)
         self.render("pp_landing_page.html", title="Riptide Proxy", base_url=self.config["url"],
                     all_projects=all_projects, load_errors=[self.format_load_error(error) for error in load_errors],
-                    letter_list=sorted(set([project['name'][0].upper() for project in all_projects]))
+                    letter_list=sorted(set([project['name'][0].upper() for project in all_projects])),
+                    all_service_statuses=self._get_multiple_service_statuses(all_projects)
         )
 
     def pp_500(self, err, trace, log_exception=True):
@@ -304,12 +307,14 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
     def pp_no_main_service(self, project: Project):
         """ Inform the user that the project has no main service, and list available services. """
         self.set_status(503)
-        self.render("pp_no_main_service.html", title="Riptide Proxy - No Main Service", project=project, base_url=self.config["url"])
+        self.render("pp_no_main_service.html", title="Riptide Proxy - No Main Service",
+                    project=project, base_url=self.config["url"], service_statuses=self._get_service_statuses(project))
 
     def pp_service_not_found(self, project: Project, request_service_name):
         """ Inform the user that a service was not found for the project, and list available services. """
         self.set_status(400)
-        self.render("pp_service_not_found.html", title="Riptide Proxy - Service Not Found", project=project, base_url=self.config["url"], service_name=request_service_name)
+        self.render("pp_service_not_found.html", title="Riptide Proxy - Service Not Found",
+                    project=project, base_url=self.config["url"], service_name=request_service_name, service_statuses=self._get_service_statuses(project))
 
     def pp_start_project(self, project: Project, resolved_service_name):
         """ Start the auto start procedure for a project """
@@ -330,7 +335,8 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
     def pp_project_not_started(self, project: Project, resolved_service_name):
         """ Inform the user, that the requested service is not started. """
         self.set_status(503)
-        self.render("pp_project_not_started.html", title="Riptide Proxy - Service Not Started", project=project, base_url=self.config["url"], service_name=resolved_service_name)
+        self.render("pp_project_not_started.html", title="Riptide Proxy - Service Not Started",
+                    project=project, base_url=self.config["url"], service_name=resolved_service_name, service_statuses=self._get_service_statuses(project))
 
     def pp_project_not_found(self, project_name):
         """ Inform the user, that the requested project was not found, and display a list of all projects. """
@@ -355,3 +361,11 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
                 stack.append(f'>> Caused by {str(current_err)}')
             previous_message = str(current_err)
         return stack
+
+    def _get_service_statuses(self, project: Project):
+        """Returns the engine container status for all services in project"""
+        return self.engine.status(project)
+
+    def _get_multiple_service_statuses(self, all_projects: List[Project]):
+        """Returns all the engine container statuses for all services in all projects specified"""
+        return {p['name']: self._get_service_statuses(p) for p in all_projects}
