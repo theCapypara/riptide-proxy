@@ -1,6 +1,8 @@
-import tornado.web
+from typing import Union, Pattern
 
-from riptide_mission_control.server.starter import HostnameMatcher
+import tornado.web
+import tornado.routing
+
 from guppy import hpy
 
 
@@ -55,3 +57,15 @@ class ProfileHttpHandler(tornado.web.RequestHandler):
                 self.write(f"\n\n=== BYRCRS[{i}].referents ==\n")
                 self.write(str(heap.byrcs[i].referents))
 
+
+class HostnameMatcher(tornado.routing.PathMatches):
+
+    def __init__(self, path_pattern: Union[str, Pattern], hostname: str) -> None:
+        self.hostname = hostname
+        super().__init__(path_pattern)
+
+    def match(self, request):
+        """ Match path and hostname """
+        if request.host_name != self.hostname:
+            return None
+        return super().match(request)
