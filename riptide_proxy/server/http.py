@@ -61,7 +61,7 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
         self.engine: AbstractEngine = engine
         self.runtime_storage = runtime_storage
 
-        self.http_client = tornado.httpclient.AsyncHTTPClient()
+        self.http_client = tornado.httpclient.AsyncHTTPClient(force_instance=True)
         self.running_upstream_request_future: Future = None
 
         # Request id, only for debugging
@@ -176,7 +176,8 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
         :param address:         The address to the container, incl. port
         :return:
         """
-        logger.debug('[R %d] Handle %s request to %s (%s)', self.request_id, self.request.method, project["name"], address)
+        logger.debug('[R %d] Handle %s request to %s:%s (%s)',
+                     self.request_id, self.request.method, project["name"], self.request.path, address)
 
         body = self.request.body
         headers = self.request.headers.copy()
@@ -202,6 +203,7 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
                 request_timeout=UPSTREAM_REQUEST_TIMEOUT,
                 allow_nonstandard_methods=True
             )
+            logger.debug('[R %d] http_client for connection: %s', self.request_id, id(self.http_client))
             self.running_upstream_request_future = self.http_client.fetch(req)
             response = await self.running_upstream_request_future
             # Close the connection. There seems to be an issue, where sometimes connections are not properly closed?
@@ -236,6 +238,7 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
 
         except RuntimeError as err:
             if 'called on closed' in str(err):
+                logger.debug('[R %d] http request object was closed (%s)! Sending 499.', self.request_id, str(err))
                 # Since the closing of the connection in on_connection_close can happen in any time,
                 # there's the rare chance we run into this.
                 # We ignore this, and return the Client Closed Request code as above.
