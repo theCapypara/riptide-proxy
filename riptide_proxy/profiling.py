@@ -2,7 +2,10 @@ from typing import Union, Pattern
 
 import tornado.web
 import tornado.routing
+from riptide_proxy.server.http import ProxyHttpHandler
+import tornado.httpclient
 
+import gc
 from guppy import hpy
 
 
@@ -28,7 +31,13 @@ class ProfileHttpHandler(tornado.web.RequestHandler):
         :return:
         """
         heap = h.heap()
-        self.write("<code><pre>\n=== DEFAULT VIEW ==\n")
+        self.write("<code><pre>")
+        self.write("\n\n=== gc: INSTANCES OF ProxyHttpHandler ==\n")
+        self.write(f"{sum(1 for o in gc.get_referrers(ProxyHttpHandler))}\n")
+        self.write("\n\n=== gc: INSTANCES OF AsyncHTTPClient ==\n")
+        self.write(f"{sum(1 for o in gc.get_referrers(tornado.httpclient.AsyncHTTPClient))}\n")
+
+        self.write("\n\n=== DEFAULT VIEW ==\n")
         self.write(str(heap))
 
         self.write("\n\n=== BYTYPE VIEW ==\n")
