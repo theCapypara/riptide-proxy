@@ -15,13 +15,14 @@ logger = logging.getLogger(LOGGER_NAME)
 
 
 class RuntimeStorage:
-    def __init__(self, projects_mapping: Dict, project_cache: Dict, ip_cache: Dict, engine: AbstractEngine):
+    def __init__(self, projects_mapping: Dict, project_cache: Dict, ip_cache: Dict, engine: AbstractEngine, use_compression=False):
         self.projects_mapping = projects_mapping
         # A cache of projects. Contains a mapping (project file path) => [project object, age]
         self.project_cache = project_cache
         # A cache of ip addresses for services. Contains a mapping (project_name + "__" + service_name) => [address, age]
         self.ip_cache = ip_cache
         self.engine = engine
+        self.use_compression = use_compression
 
 
 class ResolveStatus(Enum):

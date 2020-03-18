@@ -79,10 +79,13 @@ def run_proxy(system_config: Config, engine: AbstractEngine, http_port, https_po
     projects = load_projects()
 
     # Configure global storage
+    use_compression = True if 'compression' in system_config['proxy'] and system_config['proxy']['compression'] else False
     storage = {
         "config": system_config["proxy"],
         "engine": engine,
-        "runtime_storage": RuntimeStorage(projects_mapping=projects, project_cache={}, ip_cache={}, engine=engine)
+        "runtime_storage": RuntimeStorage(
+            projects_mapping=projects, project_cache={}, ip_cache={}, engine=engine, use_compression=use_compression
+        )
     }
 
     # Configure Routes

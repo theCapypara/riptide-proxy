@@ -201,7 +201,8 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
                 follow_redirects=False,
                 connect_timeout=UPSTREAM_CONNECT_TIMEOUT,
                 request_timeout=UPSTREAM_REQUEST_TIMEOUT,
-                allow_nonstandard_methods=True
+                allow_nonstandard_methods=True,
+                decompress_response=not self.runtime_storage.use_compression
             )
             logger.debug('[R %d] http_client for connection: %s', self.request_id, id(self.http_client))
             self.running_upstream_request_future = self.http_client.fetch(req)
@@ -258,7 +259,11 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
 
         for header, v in response.headers.get_all():
             # Some headers are not useful to send or have to be re-calculated.
-            if header not in ('Content-Length', 'Transfer-Encoding', 'Content-Encoding', 'Connection'):
+            headers_to_recalculate = ['Content-Length', 'Transfer-Encoding', 'Connection']
+            if not self.runtime_storage.use_compression:
+                # make sure to only pass Content-Encoding then, otherwise it's better when we recalculate!
+                headers_to_recalculate.append('Content-Encoding')
+            if header not in headers_to_recalculate:
                 self.add_header(header, v)
 
         if response.body:
