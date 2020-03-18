@@ -147,7 +147,7 @@ def get_all_projects(runtime_storage) -> Tuple[List[Project], List[ProjectLoadEr
         except ProjectLoadError as load_error:
             errors.append(load_error)
 
-    return [tupl[0] for tupl in runtime_storage.project_cache.values()], errors
+    return sorted((tupl[0] for tupl in runtime_storage.project_cache.values()), key=lambda p: p['name']), errors
 
 
 def _load_single_project(project_file, engine):
