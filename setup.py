@@ -1,3 +1,4 @@
+__version__ = '0.5.8'
 from setuptools import setup, find_packages
 
 # README read-in
@@ -9,7 +10,7 @@ with open(path.join(this_directory, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='riptide-proxy',
-    version='0.5.8',
+    version=__version__,
     packages=find_packages(),
     package_data={'riptide_proxy': ['tpl/*']},
     description='Tool to manage development environments for web applications using containers - HTTP and WebSocket Reverse Proxy Server',
@@ -34,6 +35,7 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
     ],
     entry_points='''
         [console_scripts]
