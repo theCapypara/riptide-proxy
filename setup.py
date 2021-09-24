@@ -1,4 +1,4 @@
-__version__ = '0.5.8'
+__version__ = '0.6.0'
 from setuptools import setup, find_packages
 
 # README read-in
@@ -18,7 +18,7 @@ setup(
     long_description_content_type='text/x-rst',
     url='https://github.com/Parakoopa/riptide-proxy/',
     install_requires=[
-        'riptide-lib >= 0.5, < 0.6',
+        'riptide-lib >= 0.6, < 0.7',
         'tornado >= 6.0',
         'Click >= 7.0',
         'python-prctl >= 1.7; sys_platform == "linux"',
