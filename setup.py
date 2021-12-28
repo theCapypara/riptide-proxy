@@ -16,7 +16,7 @@ setup(
     description='Tool to manage development environments for web applications using containers - HTTP and WebSocket Reverse Proxy Server',
     long_description=long_description,
     long_description_content_type='text/x-rst',
-    url='https://github.com/Parakoopa/riptide-proxy/',
+    url='https://github.com/theCapypara/riptide-proxy/',
     install_requires=[
         'riptide-lib >= 0.7, < 0.8',
         'tornado >= 6.0',
