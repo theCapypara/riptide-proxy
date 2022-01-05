@@ -63,6 +63,7 @@ def main(user, loglevel, version=False):
         config_path = riptide_main_config_file()
         system_config = Config.from_yaml(config_path)
         system_config.validate()
+        system_config.freeze()
     except FileNotFoundError as e:
         raise ClickException("Main config file not found. Run riptide config-edit-user.") from e
     except Exception as e:
