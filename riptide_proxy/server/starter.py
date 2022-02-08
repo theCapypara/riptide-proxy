@@ -8,7 +8,9 @@ from importlib.util import find_spec
 from riptide.config.document.config import Config
 from riptide.config.loader import load_projects
 from riptide.engine.abstract import AbstractEngine
+from riptide.plugin.loader import load_plugins
 from riptide_proxy import LOGGER_NAME
+from riptide_proxy.abstract_plugin import ProxyServerPlugin
 from riptide_proxy.project_loader import RuntimeStorage
 from riptide_proxy.resources import get_resources
 from riptide_proxy.server.http import ProxyHttpHandler
@@ -20,10 +22,16 @@ RIPTIDE_MISSION_CONTROL_SUBDOMAIN = "control"
 RIPTIDE_PROFILING_SUBDOMAIN = "sys--dbg--profile"
 
 
-def load_plugin_routes(system_config: Config, engine: AbstractEngine, https_port):
+def load_plugin_routes(system_config: Config, engine: AbstractEngine, https_port, storage: RuntimeStorage):
+    routes = []
+
+    # Riptide Plugin routes
+    for plugin in load_plugins().values():
+        if isinstance(plugin, ProxyServerPlugin):
+            routes += plugin.get_routes(system_config, storage)
+
     # Riptide Mission Control
     mc_spec = find_spec("riptide_mission_control")
-    routes = []
     if mc_spec is not None:
         from riptide_mission_control.server.starter import get_for_external
 
@@ -51,7 +59,7 @@ def load_plugin_routes(system_config: Config, engine: AbstractEngine, https_port
             start_https_msg = f"\n    https://{RIPTIDE_PROFILING_SUBDOMAIN}.{system_config['proxy']['url']}:{system_config['proxy']['ports']['https']:d}"
 
         logger.info(
-            f"Profiling extension guppy installed. Available att:\n"
+            f"Profiling extension guppy installed. Available at:\n"
             f"    http://{RIPTIDE_PROFILING_SUBDOMAIN}.{system_config['proxy']['url']}:{system_config['proxy']['ports']['http']:d}{start_https_msg}"
         )
 
@@ -89,7 +97,7 @@ def run_proxy(system_config: Config, engine: AbstractEngine, http_port, https_po
     }
 
     # Configure Routes
-    app = tornado.web.Application(load_plugin_routes(system_config, engine, https_port) + [
+    app = tornado.web.Application(load_plugin_routes(system_config, engine, https_port, storage["runtime_storage"]) + [
         # http
         (RiptideNoWebSocketMatcher(r'^(?!/___riptide_proxy_ws).*$'), ProxyHttpHandler, storage),
         # Any non-autostart websockets
