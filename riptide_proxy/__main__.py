@@ -23,7 +23,7 @@ def print_version():
     echo(f"riptide_proxy: {pkg_resources.get_distribution('riptide_proxy').version}")
 
 
-@click.command()
+@click.command(name="riptide_proxy")
 @click.option('--user', '-u', default=os.environ.get('SUDO_USER'),
               help='Only on POSIX systems when running as root: '
                    'Specify user configuration to use. Ignored otherwise. '
@@ -94,3 +94,7 @@ def main(user, loglevel, version=False):
             https_port=system_config["proxy"]["ports"]["https"],
             ssl_options=ssl_options
         )
+
+
+if __name__ == "__main__":
+    main()
