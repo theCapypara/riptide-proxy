@@ -49,7 +49,7 @@ body > div {
   list-style: none;
 }
 
-.service-list li::before {
+.service-list > li::before {
   content: "\2022";
   color: red;
   font-weight: bold;
@@ -57,7 +57,7 @@ body > div {
   width: 1em;
   margin-left: -1em;
 }
-.service-list li.started::before {
+.service-list > li.started::before {
     color: darkgreen;
 }
 
