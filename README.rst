@@ -34,7 +34,7 @@
 
 |build| |docs| |pypi-version| |pypi-downloads| |pypi-license| |pypi-pyversions|
 
-.. |build| image:: https://img.shields.io/github/actions/workflow/status/theCapypara/riptide-proxy/build-test-publish.yml
+.. |build| image:: https://img.shields.io/github/actions/workflow/status/theCapypara/riptide-proxy/build.yml
     :target: https://github.com/theCapypara/riptide-proxy/actions
     :alt: Build Status
 
