@@ -1,5 +1,5 @@
 riptide-lib >= 0.8.0b1, < 0.9
-tornado==6.1
+tornado==6.3.2
 Click==7.0
 python-prctl==1.7; sys_platform == 'linux'
 certauth==1.3.0
