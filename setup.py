@@ -1,4 +1,4 @@
-__version__ = '0.7.1'
+__version__ = '0.8.0b1'
 from setuptools import setup, find_packages
 
 # README read-in
@@ -18,7 +18,7 @@ setup(
     long_description_content_type='text/x-rst',
     url='https://github.com/theCapypara/riptide-proxy/',
     install_requires=[
-        'riptide-lib >= 0.7, < 0.8',
+        'riptide-lib >= 0.8.0b1, < 0.9',
         'tornado >= 6.0',
         'Click >= 7.0',
         'python-prctl >= 1.7; sys_platform == "linux"',
@@ -32,11 +32,10 @@ setup(
         'Programming Language :: Python',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
     ],
     entry_points='''
         [console_scripts]
