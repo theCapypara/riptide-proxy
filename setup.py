@@ -40,6 +40,6 @@ setup(
     ],
     entry_points='''
         [console_scripts]
-        riptide_proxy=riptide_proxy.main:main
+        riptide_proxy=riptide_proxy.__main__:main
     ''',
 )

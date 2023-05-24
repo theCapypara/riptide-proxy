@@ -5,7 +5,12 @@
         {% if "port" in service %}
             {% set has_service = True %}
             <li {% if service_statuses[service['$name']] %}class="started"{% end %}>
-                {{ service['$name'] }}: <a href="//{{ service.domain() }}">//{{ service.domain() }}</a>
+                {{ service['$name'] }}: <ul>
+                <li><a href="//{{ service.domain() }}">//{{ service.domain() }}</a></li>
+                {% for subdomain, additional_domain in service.additional_domains().items() %}
+                    <li><a href="//{{ additional_domain }}">//{{ additional_domain }}</a></li>
+                {% end %}
+                </ul>
             </li>
         {% end %}
     {% end %}
