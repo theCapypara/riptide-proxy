@@ -1,6 +1,6 @@
 import click
 import logging
-import pkg_resources
+from importlib.metadata import version
 from click import ClickException, echo
 from tempfile import TemporaryDirectory
 
@@ -20,7 +20,7 @@ logger = logging.getLogger(LOGGER_NAME)
 
 def print_version():
     echo(f"riptide_lib: {get_riptide_version_raw()}")
-    echo(f"riptide_proxy: {pkg_resources.get_distribution('riptide_proxy').version}")
+    echo(f"riptide_proxy: {version('riptide-proxy')}")
 
 
 @click.command(name="riptide_proxy")
