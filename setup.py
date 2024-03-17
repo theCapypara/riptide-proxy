@@ -1,4 +1,4 @@
-__version__ = '0.8.0'
+__version__ = '0.8.1'
 from setuptools import setup, find_packages
 
 # README read-in
@@ -36,6 +36,7 @@ setup(
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
     ],
     entry_points='''
         [console_scripts]
