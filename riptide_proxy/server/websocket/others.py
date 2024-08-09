@@ -1,5 +1,6 @@
 import logging
-from tornado import websocket, ioloop
+
+from tornado import websocket, ioloop, httpclient
 from tornado.websocket import websocket_connect
 
 from riptide_proxy import LOGGER_NAME
@@ -11,6 +12,7 @@ logger = logging.getLogger(LOGGER_NAME)
 
 class ProxyWebsocketHandler(websocket.WebSocketHandler):
     """ Implementation of the Proxy for Websockets """
+
     def __init__(self, application, request, config, engine, runtime_storage, **kwargs):
         """
         :raises: FileNotFoundError if the system config was not found
@@ -82,7 +84,12 @@ class ProxyWebsocketHandler(websocket.WebSocketHandler):
         self.project = project
 
         # Establish reverse proxy connection with upstream server
-        self.conn = await websocket_connect(address.replace('http://', 'ws://') + self.request.uri)
+        backend_request = httpclient.HTTPRequest(
+            url=address.replace('http://', 'ws://') + self.request.uri,
+            headers=self.request.headers,
+            method=self.request.method
+        )
+        self.conn = await websocket_connect(backend_request)
 
         async def proxy_loop():
             while True:
@@ -90,17 +97,22 @@ class ProxyWebsocketHandler(websocket.WebSocketHandler):
                 logger.debug(f"WebSocket Proxy ({self.project['name']}): received msg (server)")
                 if msg is None:
                     break
-                await self.write_message(msg)
+                await self.write_message(msg, binary=True)
                 logger.debug(f"WebSocket Proxy ({self.project['name']}): write msg (client)")
 
         # Start backend read/write loop
         ioloop.IOLoop.current().spawn_callback(proxy_loop)
         logger.debug(f"WebSocket Proxy ({self.project['name']}): reverse proxy established")
 
+    def select_subprotocol(self, subprotocols):
+        if len(subprotocols) == 0:
+            return None
+        return subprotocols[0]
+
     def on_message(self, message):
         # Send message to backend
         logger.debug(f"WebSocket Proxy ({self.project['name']}): received msg (client)")
-        self.conn.write_message(message)
+        self.conn.write_message(message, binary=True)
         logger.debug(f"WebSocket Proxy ({self.project['name']}): write msg (server)")
 
     def on_close(self, code=None, reason=None):
