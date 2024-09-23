@@ -1,8 +1,10 @@
-__version__ = '0.8.1'
-from setuptools import setup, find_packages
+__version__ = '0.9.0'
 
 # README read-in
 from os import path
+
+from setuptools import setup, find_packages
+
 this_directory = path.abspath(path.dirname(__file__))
 with open(path.join(this_directory, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
@@ -18,14 +20,14 @@ setup(
     long_description_content_type='text/x-rst',
     url='https://github.com/theCapypara/riptide-proxy/',
     install_requires=[
-        'riptide-lib >= 0.8.0, < 0.9',
+        'riptide-lib >= 0.9, < 0.10',
         'tornado >= 6.0',
         'Click >= 7.0',
         'python-prctl >= 1.7; sys_platform == "linux"',
         'certauth >= 1.3'
     ],
     extras_require={
-        'profiling':  ["guppy3>=3.0.9"]
+        'profiling': ["guppy3>=3.0.9"]
     },
     classifiers=[
         'Development Status :: 3 - Alpha',
@@ -37,6 +39,7 @@ setup(
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
         'Programming Language :: Python :: 3.12',
+        'Programming Language :: Python :: 3.13',
     ],
     entry_points='''
         [console_scripts]
