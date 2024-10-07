@@ -97,7 +97,7 @@ class ProxyWebsocketHandler(websocket.WebSocketHandler):
                 logger.debug(f"WebSocket Proxy ({self.project['name']}): received msg (server)")
                 if msg is None:
                     break
-                await self.write_message(msg, binary=True)
+                await self.write_message(msg, binary=isinstance(msg, bytes))
                 logger.debug(f"WebSocket Proxy ({self.project['name']}): write msg (client)")
 
         # Start backend read/write loop
@@ -112,7 +112,7 @@ class ProxyWebsocketHandler(websocket.WebSocketHandler):
     def on_message(self, message):
         # Send message to backend
         logger.debug(f"WebSocket Proxy ({self.project['name']}): received msg (client)")
-        self.conn.write_message(message, binary=True)
+        self.conn.write_message(message, binary=isinstance(message, bytes))
         logger.debug(f"WebSocket Proxy ({self.project['name']}): write msg (server)")
 
     def on_close(self, code=None, reason=None):
