@@ -329,9 +329,9 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
         self.set_status(200)
         # Either start all or the defined default services
         if "default_services" in project:
-            services_to_start = project["default_services"]
+            services_to_start = sorted(project["default_services"])
         else:
-            services_to_start = project["app"]["services"].keys()
+            services_to_start = sorted(project["app"]["services"].keys())
         # If the resolved service name is not in the list of services to start, show the start error page instead,
         # TODO: Extend autostart for this
         if resolved_service_name not in services_to_start:

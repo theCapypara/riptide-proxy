@@ -1,7 +1,7 @@
 <h3>Services of {{ project["name"] }}:</h3>
 <ul class="service-list">
     {% set has_service = False %}
-    {% for service in project["app"]["services"].values() %}
+    {% for service in dict(sorted(project["app"]["services"].items())).values() %}
         {% if "port" in service %}
             {% set has_service = True %}
             <li {% if service_statuses[service['$name']] %}class="started"{% end %}>
