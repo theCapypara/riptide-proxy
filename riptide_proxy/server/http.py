@@ -45,7 +45,6 @@ logger = logging.getLogger(LOGGER_NAME)
 
 
 class ProxyHttpHandler(tornado.web.RequestHandler):
-
     SUPPORTED_METHODS = ("GET", "HEAD", "POST", "DELETE", "PATCH", "PUT", "OPTIONS")
 
     def __init__(self, application, request, config, engine, runtime_storage, **kwargs):
@@ -68,6 +67,7 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
         self.request_id = 0
         if logger.getEffectiveLevel() <= logging.DEBUG:
             import random, sys
+
             self.request_id = random.randint(0, sys.maxsize * 2 + 1)
 
     def compute_etag(self):
@@ -83,9 +83,9 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
         """
 
         try:
-
-            rc, data = resolve_project(self.request.host, self.config["url"],
-                                       self.runtime_storage, self.config['autostart'])
+            rc, data = resolve_project(
+                self.request.host, self.config["url"], self.runtime_storage, self.config["autostart"]
+            )
 
             if rc == ResolveStatus.SUCCESS:
                 project, resolved_service_name, address = data
@@ -137,7 +137,9 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
     async def delete(self):
         return await self.get()
 
-    async def patch(self,):
+    async def patch(
+        self,
+    ):
         return await self.get()
 
     async def put(self):
@@ -151,7 +153,7 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
         The connection was closed, before we finished processing. Close any running http clients (we don't
         need to wait for requests to finish if we don't have a user listening to the response.
         """
-        logger.debug('[R %d] connection was closed by client. Aborting.', self.request_id)
+        logger.debug("[R %d] connection was closed by client. Aborting.", self.request_id)
         try:
             if self.running_upstream_request_future is not None:
                 # XXX:
@@ -161,11 +163,11 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
                 #     tornado.httpclient.HTTPClientError: HTTP 404: Not Found
                 # Nothing we can really do about this atm.
                 self.running_upstream_request_future.cancel()
-                logger.debug('[R %d] successfully canceled upstream request future.', self.request_id)
+                logger.debug("[R %d] successfully canceled upstream request future.", self.request_id)
             self.http_client.close()
-            logger.debug('[R %d] successfully closed upstream connection.', self.request_id)
+            logger.debug("[R %d] successfully closed upstream connection.", self.request_id)
         except RuntimeError as ex:
-            logger.debug('[R %d] upstream connection was already closed (%s).', self.request_id, str(ex))
+            logger.debug("[R %d] upstream connection was already closed (%s).", self.request_id, str(ex))
 
     async def reverse_proxy(self, project: Project, service_name: str, address: str):
         """
@@ -176,17 +178,23 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
         :param address:         The address to the container, incl. port
         :return:
         """
-        logger.debug('[R %d] Handle %s request to %s:%s (%s)',
-                     self.request_id, self.request.method, project["name"], self.request.path, address)
+        logger.debug(
+            "[R %d] Handle %s request to %s:%s (%s)",
+            self.request_id,
+            self.request.method,
+            project["name"],
+            self.request.path,
+            address,
+        )
 
         body = self.request.body
         headers = self.request.headers.copy()
 
         # Proxy Headers
-        headers.add('X-Real-Ip', self.request.remote_ip)
-        headers.add('X-Forwarded-For', self.request.remote_ip)
-        headers.add('X-Forwarded-Proto', self.request.protocol)
-        headers.add('X-Scheme', self.request.protocol)
+        headers.add("X-Real-Ip", self.request.remote_ip)
+        headers.add("X-Forwarded-For", self.request.remote_ip)
+        headers.add("X-Forwarded-Proto", self.request.protocol)
+        headers.add("X-Scheme", self.request.protocol)
 
         if not body:
             body = None
@@ -202,28 +210,28 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
                 connect_timeout=UPSTREAM_CONNECT_TIMEOUT,
                 request_timeout=UPSTREAM_REQUEST_TIMEOUT,
                 allow_nonstandard_methods=True,
-                decompress_response=not self.runtime_storage.use_compression
+                decompress_response=not self.runtime_storage.use_compression,
             )
-            logger.debug('[R %d] http_client for connection: %s', self.request_id, id(self.http_client))
+            logger.debug("[R %d] http_client for connection: %s", self.request_id, id(self.http_client))
             self.running_upstream_request_future = self.http_client.fetch(req)
             response = await self.running_upstream_request_future
             # Close the connection. There seems to be an issue, where sometimes connections are not properly closed?
             self.http_client.close()
-            logger.debug('[R %d] done.', self.request_id)
+            logger.debug("[R %d] done.", self.request_id)
             # Handle the response
             self.proxy_handle_response(response)
 
         except tornado.httpclient.HTTPClientError as e:
             if e.code == 599:
-                logger.debug('[R %d] error timeout.', self.request_id)
+                logger.debug("[R %d] error timeout.", self.request_id)
                 # Gateway Timeout
                 self.pp_gateway_timeout(project, service_name, address)
-            elif hasattr(e, 'response') and e.response:
-                logger.debug('[R %d] error generic.', self.request_id)
+            elif hasattr(e, "response") and e.response:
+                logger.debug("[R %d] error generic.", self.request_id)
                 # Generic HTTP error/redirect. Just forward
                 self.proxy_handle_response(e.response)
             else:
-                logger.debug('[R %d] error bad gateway.', self.request_id)
+                logger.debug("[R %d] error bad gateway.", self.request_id)
                 # Unknown error
                 self.pp_502(address)
                 return
@@ -238,8 +246,8 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
             self.set_status(499, "Client Closed Request")
 
         except RuntimeError as err:
-            if 'called on closed' in str(err):
-                logger.debug('[R %d] http request object was closed (%s)! Sending 499.', self.request_id, str(err))
+            if "called on closed" in str(err):
+                logger.debug("[R %d] http request object was closed (%s)! Sending 499.", self.request_id, str(err))
                 # Since the closing of the connection in on_connection_close can happen in any time,
                 # there's the rare chance we run into this.
                 # We ignore this, and return the Client Closed Request code as above.
@@ -259,20 +267,20 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
 
         for header, v in response.headers.get_all():
             # Some headers are not useful to send or have to be re-calculated.
-            headers_to_recalculate = ['Content-Length', 'Transfer-Encoding', 'Connection']
+            headers_to_recalculate = ["Content-Length", "Transfer-Encoding", "Connection"]
             if not self.runtime_storage.use_compression:
                 # make sure to only pass Content-Encoding then, otherwise it's better when we recalculate!
-                headers_to_recalculate.append('Content-Encoding')
+                headers_to_recalculate.append("Content-Encoding")
             if header not in headers_to_recalculate:
                 self.add_header(header, v)
 
         if response.body:
-            self.set_header('Content-Length', len(response.body))
-            self.set_header('X-Forwarded-By', 'riptide proxy')
+            self.set_header("Content-Length", len(response.body))
+            self.set_header("X-Forwarded-By", "riptide proxy")
             self.write(response.body)
 
     async def retry_after_address_not_found_with_flushed_cache(self, project, service_name, err):
-        """ Retry the request again (once!) with cleared caches. """
+        """Retry the request again (once!) with cleared caches."""
         if self.request.__riptide_retried:
             self.pp_500(err, traceback.format_exc())
             return
@@ -285,47 +293,74 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
         return await self.get()
 
     def pp_landing_page(self):
-        """ Display the landing page """
+        """Display the landing page"""
         self.set_status(200)
         all_projects, load_errors = get_all_projects(self.runtime_storage)
-        self.render("pp_landing_page.html", title="Riptide Proxy", base_url=self.config["url"],
-                    all_projects=all_projects, load_errors=[self.format_load_error(error) for error in load_errors],
-                    letter_list=sorted(set([project['name'][0].upper() for project in all_projects])),
-                    all_service_statuses=self._get_multiple_service_statuses(all_projects)
+        self.render(
+            "pp_landing_page.html",
+            title="Riptide Proxy",
+            base_url=self.config["url"],
+            all_projects=all_projects,
+            load_errors=[self.format_load_error(error) for error in load_errors],
+            letter_list=sorted(set([project["name"][0].upper() for project in all_projects])),
+            all_service_statuses=self._get_multiple_service_statuses(all_projects),
         )
 
     def pp_500(self, err, trace, log_exception=True):
-        """ Display a generic error page """
+        """Display a generic error page"""
         self.set_status(500)
         if log_exception:
             logger.exception(err)
-        self.render("pp_500.html", title="Riptide Proxy - 500 Internal Server Error", trace=trace, err=err, base_url=self.config["url"])
+        self.render(
+            "pp_500.html",
+            title="Riptide Proxy - 500 Internal Server Error",
+            trace=trace,
+            err=err,
+            base_url=self.config["url"],
+        )
 
     def pp_500_project_load(self, err):
-        """ Display project load error page """
+        """Display project load error page"""
         self.set_status(500)
         logger.error(str(err))
-        self.render("pp_500_project_load.html", title="Riptide Proxy - Error loading project", trace=self.format_load_error(err), project=err.project_name, base_url=self.config["url"])
+        self.render(
+            "pp_500_project_load.html",
+            title="Riptide Proxy - Error loading project",
+            trace=self.format_load_error(err),
+            project=err.project_name,
+            base_url=self.config["url"],
+        )
 
     def pp_502(self, err):
-        """ Display a Bad Gateway error, if the upstream server sent an invalid response """
+        """Display a Bad Gateway error, if the upstream server sent an invalid response"""
         self.set_status(502)
         self.render("pp_502.html", title="Riptide Proxy - 502 Bad Gateway", err=err, base_url=self.config["url"])
 
     def pp_no_main_service(self, project: Project):
-        """ Inform the user that the project has no main service, and list available services. """
+        """Inform the user that the project has no main service, and list available services."""
         self.set_status(503)
-        self.render("pp_no_main_service.html", title="Riptide Proxy - No Main Service",
-                    project=project, base_url=self.config["url"], service_statuses=self._get_service_statuses(project))
+        self.render(
+            "pp_no_main_service.html",
+            title="Riptide Proxy - No Main Service",
+            project=project,
+            base_url=self.config["url"],
+            service_statuses=self._get_service_statuses(project),
+        )
 
     def pp_service_not_found(self, project: Project, request_service_name):
-        """ Inform the user that a service was not found for the project, and list available services. """
+        """Inform the user that a service was not found for the project, and list available services."""
         self.set_status(400)
-        self.render("pp_service_not_found.html", title="Riptide Proxy - Service Not Found",
-                    project=project, base_url=self.config["url"], service_name=request_service_name, service_statuses=self._get_service_statuses(project))
+        self.render(
+            "pp_service_not_found.html",
+            title="Riptide Proxy - Service Not Found",
+            project=project,
+            base_url=self.config["url"],
+            service_name=request_service_name,
+            service_statuses=self._get_service_statuses(project),
+        )
 
     def pp_start_project(self, project: Project, resolved_service_name):
-        """ Start the auto start procedure for a project """
+        """Start the auto start procedure for a project"""
         self.set_status(200)
         # Either start all or the defined default services
         if "default_services" in project:
@@ -336,29 +371,50 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
         # TODO: Extend autostart for this
         if resolved_service_name not in services_to_start:
             return self.pp_project_not_started(project, resolved_service_name)
-        self.render("pp_start_project.html", title="Riptide Proxy - Starting...", services_to_start=services_to_start,
-                    project=project, service_name=resolved_service_name, base_url=self.config["url"]
-                    )
+        self.render(
+            "pp_start_project.html",
+            title="Riptide Proxy - Starting...",
+            services_to_start=services_to_start,
+            project=project,
+            service_name=resolved_service_name,
+            base_url=self.config["url"],
+        )
 
     def pp_project_not_started(self, project: Project, resolved_service_name):
-        """ Inform the user, that the requested service is not started. """
+        """Inform the user, that the requested service is not started."""
         self.set_status(503)
-        self.render("pp_project_not_started.html", title="Riptide Proxy - Service Not Started",
-                    project=project, base_url=self.config["url"], service_name=resolved_service_name, service_statuses=self._get_service_statuses(project))
+        self.render(
+            "pp_project_not_started.html",
+            title="Riptide Proxy - Service Not Started",
+            project=project,
+            base_url=self.config["url"],
+            service_name=resolved_service_name,
+            service_statuses=self._get_service_statuses(project),
+        )
 
     def pp_project_not_found(self, project_name):
-        """ Inform the user, that the requested project was not found, and display a list of all projects. """
+        """Inform the user, that the requested project was not found, and display a list of all projects."""
         self.set_status(400)
-        self.render("pp_project_not_found.html", title="Riptide Proxy - Project Not Found",
-                    project_name=project_name, base_url=self.config["url"])
+        self.render(
+            "pp_project_not_found.html",
+            title="Riptide Proxy - Project Not Found",
+            project_name=project_name,
+            base_url=self.config["url"],
+        )
 
     def pp_gateway_timeout(self, project, service_name, address):
-        """ Inform the user of a Gateway Timeout and possible reasons for this. """
+        """Inform the user of a Gateway Timeout and possible reasons for this."""
         self.set_status(504)
-        self.render("pp_gateway_timeout.html", title="Riptide Proxy - Gateway Timeout", project=project, service_name=service_name, base_url=self.config["url"])
+        self.render(
+            "pp_gateway_timeout.html",
+            title="Riptide Proxy - Gateway Timeout",
+            project=project,
+            service_name=service_name,
+            base_url=self.config["url"],
+        )
 
     def format_load_error(self, err: ProjectLoadError):
-        """ Formats ProjectLoadErrors for display """
+        """Formats ProjectLoadErrors for display"""
         stack = [str(err)]
         current_err = err
         previous_message = str(err)
@@ -366,7 +422,7 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
             current_err = current_err.__context__
             # Filter duplicate exception messages. 'schema' used by configcrunch does that for example.
             if previous_message != str(current_err):
-                stack.append(f'>> Caused by {str(current_err)}')
+                stack.append(f">> Caused by {str(current_err)}")
             previous_message = str(current_err)
         return stack
 
@@ -376,4 +432,4 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
 
     def _get_multiple_service_statuses(self, all_projects: List[Project]):
         """Returns all the engine container statuses for all services in all projects specified"""
-        return {p['name']: self._get_service_statuses(p) for p in all_projects}
+        return {p["name"]: self._get_service_statuses(p) for p in all_projects}

@@ -1,4 +1,5 @@
 """Module to load projects and services using riptide-lib"""
+
 import time
 
 import logging
@@ -15,7 +16,9 @@ logger = logging.getLogger(LOGGER_NAME)
 
 
 class RuntimeStorage:
-    def __init__(self, projects_mapping: Dict, project_cache: Dict, ip_cache: Dict, engine: AbstractEngine, use_compression=False):
+    def __init__(
+        self, projects_mapping: Dict, project_cache: Dict, ip_cache: Dict, engine: AbstractEngine, use_compression=False
+    ):
         self.projects_mapping = projects_mapping
         # A cache of projects. Contains a mapping (project file path) => [project object, age]
         self.project_cache = project_cache
@@ -43,8 +46,9 @@ class ProjectLoadError(Exception):
         return "Error loading project " + self.project_name
 
 
-def resolve_project(hostname, base_url: str, runtime_storage: RuntimeStorage, autostart=True
-                    ) -> Tuple[ResolveStatus, any]:
+def resolve_project(
+    hostname, base_url: str, runtime_storage: RuntimeStorage, autostart=True
+) -> Tuple[ResolveStatus, any]:
     """
     Resolve the project and service based on the the hostname, base url
     and available Riptide projects, as reported by riptide-cli
@@ -147,7 +151,7 @@ def get_all_projects(runtime_storage) -> Tuple[List[Project], List[ProjectLoadEr
         except ProjectLoadError as load_error:
             errors.append(load_error)
 
-    return sorted((tupl[0] for tupl in runtime_storage.project_cache.values()), key=lambda p: p['name']), errors
+    return sorted((tupl[0] for tupl in runtime_storage.project_cache.values()), key=lambda p: p["name"]), errors
 
 
 def _load_single_project(project_file, engine):
@@ -184,8 +188,9 @@ def _extract_names_from(hostname, base_url) -> Tuple[Union[str, None], Union[str
     return project_name, request_service_name
 
 
-def load_project_and_service(project_name, service_name, runtime_storage: RuntimeStorage) \
-        -> Tuple[Union[Project, None], Union[Service, None]]:
+def load_project_and_service(
+    project_name, service_name, runtime_storage: RuntimeStorage
+) -> Tuple[Union[Project, None], Union[Service, None]]:
     """
 
     Resolves the project object and service name for the project identified by hostname
@@ -203,7 +208,7 @@ def load_project_and_service(project_name, service_name, runtime_storage: Runtim
         # Try to reload. Maybe it was added?
         runtime_storage.projects_mapping = load_projects()
         if project_name not in runtime_storage.projects_mapping:
-            logger.debug(f'Could not find project {project_name}')
+            logger.debug(f"Could not find project {project_name}")
             # Project not found
             return None, None
 
@@ -212,7 +217,7 @@ def load_project_and_service(project_name, service_name, runtime_storage: Runtim
     project_file = runtime_storage.projects_mapping[project_name]
     project_cache = runtime_storage.project_cache
     if project_file not in project_cache or current_time - project_cache[project_file][1] > PROJECT_CACHE_TIMEOUT:
-        logger.debug(f'Loading project file for {project_name} at {project_file}')
+        logger.debug(f"Loading project file for {project_name} at {project_file}")
         try:
             project = _load_single_project(project_file, runtime_storage.engine)
             project_cache[project_file] = [project, current_time]
@@ -238,7 +243,7 @@ def _resolve_container_address(project, service_name, runtime_storage):
     ip_cache = runtime_storage.ip_cache
     if key not in ip_cache or current_time - ip_cache[key][1] > CNT_ADRESS_CACHE_TIMEOUT:
         address = runtime_storage.engine.address_for(project, service_name)
-        logger.debug(f'Got container address for {key}: {address}')
+        logger.debug(f"Got container address for {key}: {address}")
         if address:
             address = "http://" + address[0] + ":" + str(address[1])
             # Only cache if we actually got something.

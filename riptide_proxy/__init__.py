@@ -1,4 +1,4 @@
-LOGGER_NAME = 'riptide_proxy'
+LOGGER_NAME = "riptide_proxy"
 
 # SERVER SETTINGS
 # TODO: Make configurable in the future

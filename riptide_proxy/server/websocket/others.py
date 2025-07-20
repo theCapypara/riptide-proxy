@@ -11,7 +11,7 @@ logger = logging.getLogger(LOGGER_NAME)
 
 
 class ProxyWebsocketHandler(websocket.WebSocketHandler):
-    """ Implementation of the Proxy for Websockets """
+    """Implementation of the Proxy for Websockets"""
 
     def __init__(self, application, request, config, engine, runtime_storage, **kwargs):
         """
@@ -33,11 +33,11 @@ class ProxyWebsocketHandler(websocket.WebSocketHandler):
         """
 
         try:
-
             logger.debug(f"Incoming WebSocket Proxy request for {self.request.host}")
 
-            rc, data = resolve_project(self.request.host, self.config["url"],
-                                       self.runtime_storage, self.config['autostart'])
+            rc, data = resolve_project(
+                self.request.host, self.config["url"], self.runtime_storage, self.config["autostart"]
+            )
 
             if rc == ResolveStatus.NO_MAIN_SERVICE:
                 project, request_service_name = data
@@ -85,9 +85,9 @@ class ProxyWebsocketHandler(websocket.WebSocketHandler):
 
         # Establish reverse proxy connection with upstream server
         backend_request = httpclient.HTTPRequest(
-            url=address.replace('http://', 'ws://') + self.request.uri,
+            url=address.replace("http://", "ws://") + self.request.uri,
             headers=self.request.headers,
-            method=self.request.method
+            method=self.request.method,
         )
         self.conn = await websocket_connect(backend_request)
 

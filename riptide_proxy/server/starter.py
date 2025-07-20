@@ -45,9 +45,7 @@ def load_plugin_routes(system_config: Config, engine: AbstractEngine, https_port
             f"    http://{RIPTIDE_MISSION_CONTROL_SUBDOMAIN}.{system_config['proxy']['url']}:{system_config['proxy']['ports']['http']:d}{start_https_msg}"
         )
         routes += get_for_external(
-            system_config,
-            engine,
-            f"{RIPTIDE_MISSION_CONTROL_SUBDOMAIN}.{system_config['proxy']['url']}"
+            system_config, engine, f"{RIPTIDE_MISSION_CONTROL_SUBDOMAIN}.{system_config['proxy']['url']}"
         )
     # Profiling
     guppy_spec = find_spec("guppy")
@@ -87,24 +85,30 @@ def run_proxy(system_config: Config, engine: AbstractEngine, http_port, https_po
     projects = load_projects()
 
     # Configure global storage
-    use_compression = True if 'compression' in system_config['proxy'] and system_config['proxy']['compression'] else False
+    use_compression = (
+        True if "compression" in system_config["proxy"] and system_config["proxy"]["compression"] else False
+    )
     storage = {
         "config": system_config["proxy"],
         "engine": engine,
         "runtime_storage": RuntimeStorage(
             projects_mapping=projects, project_cache={}, ip_cache={}, engine=engine, use_compression=use_compression
-        )
+        ),
     }
 
     # Configure Routes
-    app = tornado.web.Application(load_plugin_routes(system_config, engine, https_port, storage["runtime_storage"]) + [
-        # http
-        (RiptideNoWebSocketMatcher(r'^(?!/___riptide_proxy_ws).*$'), ProxyHttpHandler, storage),
-        # Any non-autostart websockets
-        (r'^(?!/___riptide_proxy_ws).*$', ProxyWebsocketHandler, storage),
-        # autostart websockets
-        (r'/___riptide_proxy_ws', AutostartHandler, storage),
-    ], template_path=get_resources())
+    app = tornado.web.Application(
+        load_plugin_routes(system_config, engine, https_port, storage["runtime_storage"])
+        + [
+            # http
+            (RiptideNoWebSocketMatcher(r"^(?!/___riptide_proxy_ws).*$"), ProxyHttpHandler, storage),
+            # Any non-autostart websockets
+            (r"^(?!/___riptide_proxy_ws).*$", ProxyWebsocketHandler, storage),
+            # autostart websockets
+            (r"/___riptide_proxy_ws", AutostartHandler, storage),
+        ],
+        template_path=get_resources(),
+    )
 
     # xheaders enables parsing of X-Forwarded-Ip etc. headers
     app.listen(http_port, xheaders=True)
@@ -122,7 +126,7 @@ def run_proxy(system_config: Config, engine: AbstractEngine, http_port, https_po
 
 class RiptideNoWebSocketMatcher(tornado.routing.PathMatches):
     def match(self, request):
-        """ Match path but ONLY non-Websocket requests """
+        """Match path but ONLY non-Websocket requests"""
         if "Upgrade" in request.headers and request.headers["Upgrade"] == "websocket":
             return None
         return super().match(request)

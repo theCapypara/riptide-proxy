@@ -10,7 +10,7 @@ import os, pwd, grp
 import platform
 
 
-def drop_privileges(uid_name='nobody', gid_name=None):
+def drop_privileges(uid_name="nobody", gid_name=None):
     """
     Drop root privileges by pretending to be user uid_name
     in group gid_name (defaults to primary)
@@ -35,9 +35,10 @@ def drop_privileges(uid_name='nobody', gid_name=None):
 
     # Linux: Limit capabilities to only being able to change uid and binding ports below 1024
     is_linux = False
-    if platform.system().lower().startswith('lin'):
+    if platform.system().lower().startswith("lin"):
         is_linux = True
         import prctl
+
         prctl.securebits.keep_caps = True
         prctl.securebits.no_setuid_fixup = True
         prctl.capbset.limit(prctl.CAP_NET_BIND_SERVICE, prctl.CAP_SETUID)
@@ -58,7 +59,7 @@ def drop_privileges(uid_name='nobody', gid_name=None):
     # Ensure a very conservative umask
     os.umask(0o22)
 
-    os.environ['HOME'] = pwd_user.pw_dir
+    os.environ["HOME"] = pwd_user.pw_dir
 
     # Linux: Remove setuid cap again
     if is_linux:
@@ -71,5 +72,3 @@ def drop_privileges(uid_name='nobody', gid_name=None):
         except PermissionError:
             pass
         prctl.cap_effective.drop(prctl.CAP_SETUID)
-
-
