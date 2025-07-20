@@ -38,3 +38,16 @@ Documentation = "https://riptide-docs.readthedocs.io"
 
 [project.scripts]
 riptide_proxy = "riptide_proxy.__main__:main"
+
+[tool.ruff]
+line-length = 120
+
+[tools.ruff.lint]
+select = ["W", "E", "F", "ARG"]
+
+[tool.mypy]
+warn_unused_configs = true
+mypy_path = "."
+explicit_package_bases = true
+namespace_packages = true
+check_untyped_defs = true
