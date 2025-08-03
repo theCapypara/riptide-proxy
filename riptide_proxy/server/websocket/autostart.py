@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import json
 import logging
-from typing import TYPE_CHECKING, ClassVar, Self
 from collections.abc import Awaitable
+from typing import TYPE_CHECKING, ClassVar, Self
 
 from tornado import websocket
 
