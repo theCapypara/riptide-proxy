@@ -3,15 +3,16 @@
 import ipaddress
 import logging
 
-from riptide.config.document.config import Config
 from riptide_proxy import LOGGER_NAME
 
 logger = logging.getLogger(LOGGER_NAME)
 
 
-def check_permission(ipv4address: str, config) -> bool:
+def check_permission(ipv4address: str | None, config) -> bool:
     if "autostart_restrict" not in config:
         return True
+    if ipv4address is None:
+        return False
     try:
         ipv4address_network = ipaddress.ip_network(f"{ipv4address}/32")
     except ValueError as err:

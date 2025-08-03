@@ -6,7 +6,9 @@ Inspired by / sources:
 - https://pythonhosted.org/python-prctl/
 """
 
-import os, pwd, grp
+import os
+import pwd
+import grp
 import platform
 
 

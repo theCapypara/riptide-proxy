@@ -1,9 +1,10 @@
-import click
 import logging
+import os
 from importlib.metadata import version
-from click import ClickException, echo
 from tempfile import TemporaryDirectory
 
+import click
+from click import ClickException, echo
 from riptide.config.document.config import Config
 from riptide.config.files import riptide_main_config_file
 from riptide.engine.loader import load_engine
@@ -11,7 +12,7 @@ from riptide.util import get_riptide_version_raw
 from riptide_proxy import LOGGER_NAME
 from riptide_proxy.privileges import drop_privileges
 from riptide_proxy.server.starter import run_proxy
-from riptide_proxy.ssl_key import *
+from riptide_proxy.ssl_key import create_keys
 
 # Configure logger
 logging.basicConfig()

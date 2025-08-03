@@ -1,10 +1,17 @@
 import json
 import logging
+from typing import TYPE_CHECKING, ClassVar, Self
+from collections.abc import Awaitable
+
 from tornado import websocket
 
+if TYPE_CHECKING:
+    from riptide.config.document.config import Config
+    from riptide.config.document.project import Project
+    from riptide.engine.abstract import AbstractEngine
 from riptide_proxy import LOGGER_NAME
 from riptide_proxy.autostart_restrict import check_permission
-from riptide_proxy.project_loader import load_project_and_service
+from riptide_proxy.project_loader import RuntimeStorage, load_project_and_service
 from riptide_proxy.server.websocket import ERR_BAD_GATEWAY
 
 logger = logging.getLogger(LOGGER_NAME)
@@ -14,7 +21,7 @@ def try_write(client, msg):
     """Try to send a message over a Websocket and silently fail."""
     try:
         client.write_message(msg)
-    except:
+    except Exception:
         pass
 
 
@@ -38,26 +45,29 @@ def build_status_answer(service_name, status, finished):
 
 
 class AutostartHandler(websocket.WebSocketHandler):
-    def __init__(self, application, request, config, engine, runtime_storage, **kwargs):
+    clients: ClassVar[dict[str, list[Self]]] = {}
+
+    # True if any of the WebSocket object coroutines currently starts the project
+    running: ClassVar[bool] = False
+
+    def __init__(
+        self, application, request, config: Config, engine: AbstractEngine, runtime_storage: RuntimeStorage, **kwargs
+    ):
         """
         Websocket connection for autostarting a service.
         """
         super().__init__(application, request, **kwargs)
-        self.project = None
-        self.config = config
-        self.engine = engine
-        self.runtime_storage = runtime_storage
-
-    clients = {}
-
-    # True if any of the WebSocket object coroutines currently starts the project
-    running = False
+        self.project: Project | None = None
+        self.config: Config = config
+        self.engine: AbstractEngine = engine
+        self.runtime_storage: RuntimeStorage = runtime_storage
 
     def check_origin(self, origin):
         return True
 
-    def open(self):
+    def open(self, *args: str, **kwargs: str) -> Awaitable[None] | None:
         logger.debug(f"Autostart WS: Connection from {self.request.remote_ip}. Waiting for project name...")
+        return None
 
     def on_close(self):
         if self.project:
@@ -80,7 +90,8 @@ class AutostartHandler(websocket.WebSocketHandler):
                 return
 
             # Check if client has permission for auto-start
-            if not check_permission(self.request.remote_ip, self.config):
+            addr: str = self.request.remote_ip  # type: ignore
+            if not check_permission(addr, self.config):
                 self.close(ERR_BAD_GATEWAY, "Client not allowed.")
                 return
 
@@ -94,7 +105,7 @@ class AutostartHandler(websocket.WebSocketHandler):
                     self.__class__.clients[self.project["name"]] = []
                 self.__class__.clients[self.project["name"]].append(self)
 
-            self.write_message(json.dumps({"status": "ready"}))
+            await self.write_message(json.dumps({"status": "ready"}))
 
         # Start the registered project
         elif decoded_message["method"] == "start" and self.project:  # {method: start}

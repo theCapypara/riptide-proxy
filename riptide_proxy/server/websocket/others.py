@@ -1,11 +1,15 @@
 import logging
+from typing import TYPE_CHECKING
 
-from tornado import websocket, ioloop, httpclient
-from tornado.websocket import websocket_connect
-
+if TYPE_CHECKING:
+    from riptide.config.document.config import Config
+    from riptide.config.document.project import Project
+    from riptide.engine.abstract import AbstractEngine
 from riptide_proxy import LOGGER_NAME
-from riptide_proxy.project_loader import resolve_project, ResolveStatus
+from riptide_proxy.project_loader import ResolveStatus, RuntimeStorage, resolve_project
 from riptide_proxy.server.websocket import ERR_BAD_GATEWAY
+from tornado import httpclient, ioloop, websocket
+from tornado.websocket import WebSocketClientConnection, websocket_connect
 
 logger = logging.getLogger(LOGGER_NAME)
 
@@ -13,17 +17,19 @@ logger = logging.getLogger(LOGGER_NAME)
 class ProxyWebsocketHandler(websocket.WebSocketHandler):
     """Implementation of the Proxy for Websockets"""
 
-    def __init__(self, application, request, config, engine, runtime_storage, **kwargs):
+    def __init__(
+        self, application, request, config: Config, engine: AbstractEngine, runtime_storage: RuntimeStorage, **kwargs
+    ):
         """
         :raises: FileNotFoundError if the system config was not found
         :raises: schema.SchemaError on validation errors
         """
         super().__init__(application, request, **kwargs)
-        self.config = config
-        self.engine = engine
-        self.runtime_storage = runtime_storage
-        self.conn = None
-        self.project = None
+        self.config: Config = config
+        self.engine: AbstractEngine = engine
+        self.runtime_storage: RuntimeStorage = runtime_storage
+        self.conn: WebSocketClientConnection | None = None
+        self.project: Project | None = None
 
     async def open(self, *args, **kwargs):
         """
@@ -87,11 +93,13 @@ class ProxyWebsocketHandler(websocket.WebSocketHandler):
         backend_request = httpclient.HTTPRequest(
             url=address.replace("http://", "ws://") + self.request.uri,
             headers=self.request.headers,
-            method=self.request.method,
+            method=self.request.method or "GET",
         )
         self.conn = await websocket_connect(backend_request)
 
         async def proxy_loop():
+            assert self.conn is not None
+            assert self.project is not None
             while True:
                 msg = await self.conn.read_message()
                 logger.debug(f"WebSocket Proxy ({self.project['name']}): received msg (server)")
@@ -111,12 +119,16 @@ class ProxyWebsocketHandler(websocket.WebSocketHandler):
 
     def on_message(self, message):
         # Send message to backend
+        assert self.conn is not None
+        assert self.project is not None
         logger.debug(f"WebSocket Proxy ({self.project['name']}): received msg (client)")
         self.conn.write_message(message, binary=isinstance(message, bytes))
         logger.debug(f"WebSocket Proxy ({self.project['name']}): write msg (server)")
 
     def on_close(self, code=None, reason=None):
         # Close backend connection
+        assert self.project is not None
         logger.debug(f"WebSocket Proxy ({self.project['name']}): closed (client)")
-        self.conn.close(code, reason)
+        if self.conn is not None:
+            self.conn.close(code, reason)
         logger.debug(f"WebSocket Proxy ({self.project['name']}): closed (server)")

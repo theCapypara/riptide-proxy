@@ -1,10 +1,10 @@
 import logging
+from importlib.util import find_spec
+
 import tornado.httpserver
 import tornado.ioloop
 import tornado.routing
 import tornado.web
-from importlib.util import find_spec
-
 from riptide.config.document.config import Config
 from riptide.config.loader import load_projects
 from riptide.engine.abstract import AbstractEngine
@@ -14,8 +14,8 @@ from riptide_proxy.abstract_plugin import ProxyServerPlugin
 from riptide_proxy.project_loader import RuntimeStorage
 from riptide_proxy.resources import get_resources
 from riptide_proxy.server.http import ProxyHttpHandler
-from riptide_proxy.server.websocket.others import ProxyWebsocketHandler
 from riptide_proxy.server.websocket.autostart import AutostartHandler
+from riptide_proxy.server.websocket.others import ProxyWebsocketHandler
 
 logger = logging.getLogger(LOGGER_NAME)
 RIPTIDE_MISSION_CONTROL_SUBDOMAIN = "control"
@@ -30,23 +30,6 @@ def load_plugin_routes(system_config: Config, engine: AbstractEngine, https_port
         if isinstance(plugin, ProxyServerPlugin):
             routes += plugin.get_routes(system_config, storage)
 
-    # Riptide Mission Control
-    mc_spec = find_spec("riptide_mission_control")
-    if mc_spec is not None:
-        from riptide_mission_control.server.starter import get_for_external
-
-        start_https_msg = ""
-
-        if https_port:
-            start_https_msg = f"\n    https://{RIPTIDE_MISSION_CONTROL_SUBDOMAIN}.{system_config['proxy']['url']}:{system_config['proxy']['ports']['https']:d}"
-
-        logger.info(
-            f"Riptide Mission Control is also started at:\n"
-            f"    http://{RIPTIDE_MISSION_CONTROL_SUBDOMAIN}.{system_config['proxy']['url']}:{system_config['proxy']['ports']['http']:d}{start_https_msg}"
-        )
-        routes += get_for_external(
-            system_config, engine, f"{RIPTIDE_MISSION_CONTROL_SUBDOMAIN}.{system_config['proxy']['url']}"
-        )
     # Profiling
     guppy_spec = find_spec("guppy")
     if guppy_spec is not None:

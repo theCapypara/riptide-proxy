@@ -26,20 +26,29 @@
 # THE SOFTWARE.
 
 import logging
-from asyncio import Future, CancelledError
-from typing import List
+import traceback
+from asyncio import CancelledError, Future
 
 import tornado.httpclient
 import tornado.httputil
 import tornado.web
-import traceback
-
+from riptide.config.document.config import Config
 from riptide.config.document.project import Project
 from riptide.config.loader import load_projects
 from riptide.engine.abstract import AbstractEngine
+from riptide_proxy import (
+    LOGGER_NAME,
+    UPSTREAM_CONNECT_TIMEOUT,
+    UPSTREAM_REQUEST_TIMEOUT,
+)
 from riptide_proxy.autostart_restrict import check_permission
-from riptide_proxy.project_loader import get_all_projects, resolve_project, ResolveStatus, ProjectLoadError
-from riptide_proxy import UPSTREAM_REQUEST_TIMEOUT, UPSTREAM_CONNECT_TIMEOUT, LOGGER_NAME
+from riptide_proxy.project_loader import (
+    ProjectLoadError,
+    ResolveStatus,
+    RuntimeStorage,
+    get_all_projects,
+    resolve_project,
+)
 
 logger = logging.getLogger(LOGGER_NAME)
 
@@ -47,7 +56,9 @@ logger = logging.getLogger(LOGGER_NAME)
 class ProxyHttpHandler(tornado.web.RequestHandler):
     SUPPORTED_METHODS = ("GET", "HEAD", "POST", "DELETE", "PATCH", "PUT", "OPTIONS")
 
-    def __init__(self, application, request, config, engine, runtime_storage, **kwargs):
+    def __init__(
+        self, application, request, config: Config, engine: AbstractEngine, runtime_storage: RuntimeStorage, **kwargs
+    ):
         """
         HTTP proxy handler. Handles incoming HTTP proxy requests, and sends them to the service containers
         (if possible), displays status pages otherwise.
@@ -56,17 +67,18 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
         :raises: schema.SchemaError on validation errors
         """
         super().__init__(application, request, **kwargs)
-        self.config = config
+        self.config: Config = config
         self.engine: AbstractEngine = engine
         self.runtime_storage = runtime_storage
 
         self.http_client = tornado.httpclient.AsyncHTTPClient(force_instance=True)
-        self.running_upstream_request_future: Future = None
+        self.running_upstream_request_future: Future | None = None
 
         # Request id, only for debugging
         self.request_id = 0
         if logger.getEffectiveLevel() <= logging.DEBUG:
-            import random, sys
+            import random
+            import sys
 
             self.request_id = random.randint(0, sys.maxsize * 2 + 1)
 
@@ -74,7 +86,7 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
         return None  # disable tornado Etag
 
     def initialize(self):
-        self.request.__riptide_retried = False
+        self.request.__riptide_retried = False  # type: ignore
 
     async def get(self):
         """
@@ -187,12 +199,12 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
             address,
         )
 
-        body = self.request.body
+        body: bytes | None = self.request.body
         headers = self.request.headers.copy()
 
         # Proxy Headers
-        headers.add("X-Real-Ip", self.request.remote_ip)
-        headers.add("X-Forwarded-For", self.request.remote_ip)
+        headers.add("X-Real-Ip", self.request.remote_ip)  # type: ignore
+        headers.add("X-Forwarded-For", self.request.remote_ip)  # type: ignore
         headers.add("X-Forwarded-Proto", self.request.protocol)
         headers.add("X-Scheme", self.request.protocol)
 
@@ -202,8 +214,8 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
         try:
             # Send request
             req = tornado.httpclient.HTTPRequest(
-                address + self.request.uri,
-                method=self.request.method,
+                address + self.request.uri,  # type: ignore
+                method=self.request.method,  # type: ignore
                 body=body,
                 headers=headers,
                 follow_redirects=False,
@@ -281,10 +293,10 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
 
     async def retry_after_address_not_found_with_flushed_cache(self, project, service_name, err):
         """Retry the request again (once!) with cleared caches."""
-        if self.request.__riptide_retried:
+        if self.request.__riptide_retried:  # type: ignore
             self.pp_500(err, traceback.format_exc())
             return
-        self.request.__riptide_retried = True
+        self.request.__riptide_retried = True  # type: ignore
 
         self.runtime_storage.projects_mapping = load_projects()
         self.runtime_storage.project_cache = {}
@@ -302,7 +314,7 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
             base_url=self.config["url"],
             all_projects=all_projects,
             load_errors=[self.format_load_error(error) for error in load_errors],
-            letter_list=sorted(set([project["name"][0].upper() for project in all_projects])),
+            letter_list=sorted({project["name"][0].upper() for project in all_projects}),
             all_service_statuses=self._get_multiple_service_statuses(all_projects),
         )
 
@@ -416,7 +428,7 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
     def format_load_error(self, err: ProjectLoadError):
         """Formats ProjectLoadErrors for display"""
         stack = [str(err)]
-        current_err = err
+        current_err: BaseException = err
         previous_message = str(err)
         while current_err.__context__ is not None:
             current_err = current_err.__context__
@@ -430,6 +442,6 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
         """Returns the engine container status for all services in project"""
         return self.engine.status(project)
 
-    def _get_multiple_service_statuses(self, all_projects: List[Project]):
+    def _get_multiple_service_statuses(self, all_projects: list[Project]):
         """Returns all the engine container statuses for all services in all projects specified"""
         return {p["name"]: self._get_service_statuses(p) for p in all_projects}
