@@ -25,7 +25,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r requirements_dev.txt
       - name: Lint with ruff
         run: ruff check --output-format=github .
 
@@ -43,7 +43,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip setuptools
-          pip install -r requirements.txt
+          pip install -r requirements_dev.txt
       - name: Check with ruff
         run: ruff format --check .
 
@@ -65,7 +65,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip setuptools
-          pip install -r requirements.txt
+          pip install -r requirements_dev.txt
       - name: Run type checks
         run: |
           mypy --config-file pyproject.toml --junit-xml mypy-${{ matrix.python-version }}.xml .
