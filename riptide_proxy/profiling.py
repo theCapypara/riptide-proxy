@@ -1,26 +1,23 @@
-from typing import Union, Pattern
-
-import tornado.web
-import tornado.routing
-from riptide_proxy.server.http import ProxyHttpHandler
-import tornado.httpclient
-
 import gc
+from re import Pattern
+
+import tornado.httpclient
+import tornado.routing
+import tornado.web
 from guppy import hpy
+from riptide_proxy.server.http import ProxyHttpHandler
 
-
-h=hpy()
+h = hpy()
 
 
 def get_profiling_route(hostname):
     return [
-        (HostnameMatcher(r'/', hostname), ProfileHttpHandler, {}),
+        (HostnameMatcher(r"/", hostname), ProfileHttpHandler, {}),
     ]
 
 
 class ProfileHttpHandler(tornado.web.RequestHandler):
-
-    SUPPORTED_METHODS = ("GET")
+    SUPPORTED_METHODS = ("GET",)
 
     def compute_etag(self):
         return None  # disable tornado Etag
@@ -68,13 +65,12 @@ class ProfileHttpHandler(tornado.web.RequestHandler):
 
 
 class HostnameMatcher(tornado.routing.PathMatches):
-
-    def __init__(self, path_pattern: Union[str, Pattern], hostname: str) -> None:
+    def __init__(self, path_pattern: str | Pattern, hostname: str) -> None:
         self.hostname = hostname
         super().__init__(path_pattern)
 
     def match(self, request):
-        """ Match path and hostname """
+        """Match path and hostname"""
         if request.host_name != self.hostname:
             return None
         return super().match(request)

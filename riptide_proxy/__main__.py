@@ -1,9 +1,10 @@
-import click
 import logging
+import os
 from importlib.metadata import version
-from click import ClickException, echo
 from tempfile import TemporaryDirectory
 
+import click
+from click import ClickException, echo
 from riptide.config.document.config import Config
 from riptide.config.files import riptide_main_config_file
 from riptide.engine.loader import load_engine
@@ -11,7 +12,7 @@ from riptide.util import get_riptide_version_raw
 from riptide_proxy import LOGGER_NAME
 from riptide_proxy.privileges import drop_privileges
 from riptide_proxy.server.starter import run_proxy
-from riptide_proxy.ssl_key import *
+from riptide_proxy.ssl_key import create_keys
 
 # Configure logger
 logging.basicConfig()
@@ -24,15 +25,22 @@ def print_version():
 
 
 @click.command(name="riptide_proxy")
-@click.option('--user', '-u', default=os.environ.get('SUDO_USER'),
-              help='Only on POSIX systems when running as root: '
-                   'Specify user configuration to use. Ignored otherwise. '
-                   'Defaults to environment variable SUDO_USER')
-@click.option('--version', is_flag=True,
-              help="Print version and exit.")
-@click.option('--loglevel', '-l', type=click.Choice(['DEBUG', 'INFO', 'WARNING', 'ERROR', 'FATAL', 'CRITICAL']),
-              default='INFO',
-              help="Log level. Default: INFO")
+@click.option(
+    "--user",
+    "-u",
+    default=os.environ.get("SUDO_USER"),
+    help="Only on POSIX systems when running as root: "
+    "Specify user configuration to use. Ignored otherwise. "
+    "Defaults to environment variable SUDO_USER",
+)
+@click.option("--version", is_flag=True, help="Print version and exit.")
+@click.option(
+    "--loglevel",
+    "-l",
+    type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "FATAL", "CRITICAL"]),
+    default="INFO",
+    help="Log level. Default: INFO",
+)
 def main(user, loglevel, version=False):
     """
     HTTP and Websocket Reverse Proxy for Riptide Projects.
@@ -74,7 +82,7 @@ def main(user, loglevel, version=False):
         engine = load_engine(system_config["engine"])
         system_config.load_performance_options(engine)
     except NotImplementedError as ex:
-        raise ClickException('Unknown engine specified in configuration.') from ex
+        raise ClickException("Unknown engine specified in configuration.") from ex
 
     with TemporaryDirectory() as temp_dir:
         # Load SSL
@@ -92,7 +100,7 @@ def main(user, loglevel, version=False):
             engine,
             http_port=system_config["proxy"]["ports"]["http"],
             https_port=system_config["proxy"]["ports"]["https"],
-            ssl_options=ssl_options
+            ssl_options=ssl_options,
         )
 
 

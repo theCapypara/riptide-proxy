@@ -1,0 +1,2 @@
+riptide-lib @ git+https://github.com/theCapypara/riptide-lib
+-r requirements_base.txt
