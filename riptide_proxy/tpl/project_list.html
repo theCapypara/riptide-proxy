@@ -1,10 +1,12 @@
 <hr>
-<h2>All projects:</h2>
-<ul class="abc-anchors">
+<div class="projects-nav">
+    <h2>All Projects</h2>
+    <span class="abc-anchors">
     {% for letter in letter_list %}
     <li><a href="#{{ letter }}">{{ letter }}</a></li>
     {% end %}
-</ul>
+    </span>
+</div>
 {% set last_first_letter = '' %}
 {% for project in all_projects %}
     {% if last_first_letter != project['name'][0].upper() %}
@@ -16,12 +18,14 @@
 {% end %}
 <hr>
 {% if len(load_errors) > 0 %}
-    <h2>Load errors:</h2>
+    <h2>Load Errors</h2>
+    <ul class="load-error">
     {% for error in load_errors %}
-        <div class="load-error">
-            {{ error[0] }}
-            <pre class="details"><code>{{ '\n'.join(error[1:]) }}</code></pre>
-        </div>
+        <li>
+            <p>{{ error[0] }}</p>
+            <p class="details">{%raw '<br>'.join(error[1:]) %}</p>
+        </li>
     {% end %}
+    </ul>
 <p><em>Tip: You can remove old or broken projects by calling <code>riptide project-remove name</code></em></p>
 {% end %}

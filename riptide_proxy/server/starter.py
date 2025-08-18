@@ -92,7 +92,9 @@ def run_proxy(system_config: Config, engine: AbstractEngine, http_port, https_po
             # autostart websockets
             (r"/___riptide_proxy_ws", AutostartHandler, storage),
         ],
-        template_path=get_resources(),
+        static_url_prefix="/___riptide/",
+        static_path=get_resources("assets"),
+        template_path=get_resources("tpl"),
     )
 
     # xheaders enables parsing of X-Forwarded-Ip etc. headers

@@ -1,4 +1,3 @@
-var project_name = '{{ project["name"] }}';
 var host = window.location.host;
 var proto = location.protocol === 'https:' ? 'wss' : 'ws';
 
@@ -8,7 +7,7 @@ var stuckTimer = null;
 
 ws.onopen = function () {
     // Start: Register project name
-    ws.send(JSON.stringify({method: 'register', project: project_name}));
+    ws.send(JSON.stringify({method: 'register', project: window.project_name}));
 };
 
 ws.onmessage = function (ev) {
@@ -17,7 +16,7 @@ ws.onmessage = function (ev) {
         // Start!
         ws.send(JSON.stringify({method: 'start'}))
         // Start stuck timer: 20sec
-        stuckTimer = window.setTimeout(function() {
+        stuckTimer = window.setTimeout(function () {
             // Only if there are still services starting (yellow bars)
             document.getElementById('stuck-warning').style.display = 'block';
         }, 40000)
@@ -49,10 +48,11 @@ ws.onmessage = function (ev) {
 ws.onclose = function (ev) {
     var reason = 'Unknown';
     if (ev.reason) {
-        reason =  + ev.reason;
+        reason = ev.reason;
     }
-    document.getElementById('autostart-error').innerHTML =
-        'Connection to Proxy closed. Reason: ' + reason + ' (Code: ' + ev.code + ')';
+    var error = document.getElementById('autostart-error');
+    error.style.display = 'block';
+    error.innerHTML = 'Connection to Proxy closed. Reason: ' + reason + ' (Code: ' + ev.code + ')';
 };
 
 

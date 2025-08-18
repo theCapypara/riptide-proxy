@@ -1,0 +1,259 @@
+@import url(./fonts/kumbh.css);
+
+:root {
+    --bg: #fbf7f0;
+    --fg: #3C2F80;
+    --ac: #26B6C6;
+    --ok: #3bc626;
+    --inact: #323232;
+    --err: #c63e26;
+    --warn: #c6b126;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #060214;
+        --fg: #FAEDDA;
+        --ac: #AEE8CA;
+        --inact: #9e9e9e;
+    }
+}
+
+body {
+    width: 100%;
+    min-height: 100vh;
+    margin: 0;
+    font-family: "Kumbh Sans", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 400;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    background-color: var(--bg);
+    animation: pulse 20s infinite;
+    color: var(--fg);
+}
+
+h1, h2, h3 {
+    font-family: "Kumbh Sans", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 600;
+    font-style: normal;
+    font-variation-settings: "YOPQ" 300;
+}
+
+h1 {
+    font-weight: 800;
+}
+
+body > div {
+    text-align: left;
+}
+
+#ct {
+    background-color: var(--bg);
+    margin-top: 20px;
+    width: 40em;
+    padding: 2em;
+    border-radius: 1em;
+    -webkit-box-shadow: 0 0 37px 1px color-mix(in srgb, var(--fg) 20%, transparent);
+    -moz-box-shadow: 0 0 37px 1px color-mix(in srgb, var(--fg) 20%, transparent);
+    box-shadow: 0 0 37px 1px color-mix(in srgb, var(--fg) 20%, transparent);
+}
+
+.projects-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.projects-nav h2 {
+    flex: 100px 1 0;
+    text-wrap: nowrap;
+}
+
+.abc-anchors {
+    list-style-type: none;
+    display: flex;
+    justify-content: right;
+    flex-wrap: wrap;
+    margin: 0;
+    padding: 0;
+}
+
+.abc-anchors li a {
+    text-align: center;
+    padding: 6px;
+    font-size: 0.8em;
+}
+
+.anchor-target {
+    visibility: hidden;
+    width: 0;
+    font-size: 0;
+}
+
+.service-list {
+    list-style: none;
+    padding-left: 0px;
+}
+
+.service-list > li {
+    border-left: 2px solid var(--inact);
+    padding-left: 10px;
+}
+
+.service-list > li.started {
+    border-left-color: darkgreen;
+}
+
+.service-list > li > ul {
+    list-style: none;
+    padding-left: 20px;
+    margin-bottom: 10px;
+}
+
+@media only screen and (max-width: 40em) {
+    #ct {
+        width: auto;
+    }
+}
+
+a {
+    color: inherit;
+    text-decoration: underline;
+}
+
+#logo {
+    width: 15em;
+}
+
+pre {
+    overflow: auto;
+}
+
+ul, pre {
+    text-align: left;
+}
+
+hr {
+    border: 0;
+}
+
+#autostart-table {
+    margin-top: 1em;
+}
+
+.at-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    text-align: left;
+}
+
+.at-col {
+    padding: 0 0.5em;
+    margin-bottom: 0.25em;
+}
+
+.col-name {
+    font-weight: 450;
+    flex: 1;
+}
+
+.col-progress {
+    flex: 1 1 30%;
+}
+
+.at-entry-status {
+    width: 100%;
+    text-align: left;
+    margin-bottom: 0.75em;
+    font-style: italic;
+    padding: 0.5em 0.5em 0.75em;
+    font-size: 0.75em;
+    min-height: 3em;
+
+}
+
+.progress {
+    height: 1em;
+    border-radius: 1em;
+    -webkit-transition: width 0.2s;
+    transition: width 0.2s;
+}
+
+.progress.wrapper {
+    background: color-mix(in srgb, var(--bg), 20% var(--fg));
+    width: 100%;
+}
+
+.progress-bar {
+    background-image: repeating-linear-gradient(
+            -45deg,
+            transparent,
+            transparent 0.4rem,
+            color-mix(in srgb, var(--bg), 80% transparent) 0.4rem,
+            color-mix(in srgb, var(--bg), 80% transparent) 0.8rem
+    );
+    background-size: 1000% 1000%;
+    animation: baranim 50s linear infinite;
+}
+
+@keyframes baranim {
+    100% {
+        background-position: -100% 100%;
+    }
+}
+
+.progress.yellow {
+    background-color: var(--warn);
+}
+
+.progress.green {
+    background-color: var(--ok);
+    animation: none;
+}
+
+.progress.red {
+    background-color: var(--err);
+    animation: none;
+}
+
+#stuck-warning {
+    display: none;
+    padding-left: 10px;
+    border-left: 4px solid var(--warn);
+}
+
+#autostart-error, #error-warning {
+    display: none;
+    padding-left: 10px;
+    border-left: 4px solid var(--err);
+}
+
+.load-error {
+    list-style: none;
+}
+
+.load-error li {
+    margin-bottom: 10px;
+    padding-left: 10px;
+    border-left: 2px solid var(--err);
+}
+
+.load-error p {
+    margin: 2px;
+}
+
+.load-error, #error-warning {
+    padding: 5px;
+}
+
+.details {
+    font-size: 0.9em;
+    font-weight: 300;
+}

@@ -1,4 +1,4 @@
-<h3>Services of {{ project["name"] }}:</h3>
+<h3>{{ project["name"] }}</h3>
 <ul class="service-list">
     {% set has_service = False %}
     {% for service in dict(sorted(project["app"]["services"].items())).values() %}
