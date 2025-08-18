@@ -315,7 +315,7 @@ class ProxyHttpHandler(tornado.web.RequestHandler):
             base_url=self.config["url"],
             all_projects=all_projects,
             load_errors=[self.format_load_error(error) for error in load_errors],
-            #letter_list=[chr(x) for x in range(0x40, 0x60)],
+            # letter_list=[chr(x) for x in range(0x40, 0x60)],
             letter_list=sorted({project["name"][0].upper() for project in all_projects}),
             all_service_statuses=self._get_multiple_service_statuses(all_projects),
         )
