@@ -50,8 +50,9 @@ ws.onclose = function (ev) {
     if (ev.reason) {
         reason = ev.reason;
     }
-    document.getElementById('autostart-error').innerHTML =
-        'Connection to Proxy closed. Reason: ' + reason + ' (Code: ' + ev.code + ')';
+    var error = document.getElementById('autostart-error');
+    error.style.display = 'block';
+    error.innerHTML = 'Connection to Proxy closed. Reason: ' + reason + ' (Code: ' + ev.code + ')';
 };
 
 

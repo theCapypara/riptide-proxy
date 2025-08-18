@@ -4,12 +4,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon"type="image/x-icon" href="{{static_url("logo.ico")}}">
     <link rel="stylesheet" href="{{static_url("styles.css")}}">
+    <meta name="darkreader-lock">
 </head>
 <body>
 <div id="ct">
 <p>
     <picture>
-        <source srcset="{{static_url("logo.svg")}}" type="image/svg+xml">
+        <source srcset="{{static_url("logo_dark.png")}}" media="(prefers-color-scheme: dark)">
         <img id="logo" src="{{static_url("logo.png")}}" alt="Riptide Proxy Server" />
     </picture>
 </p>
