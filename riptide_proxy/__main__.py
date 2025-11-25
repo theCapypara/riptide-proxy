@@ -70,12 +70,16 @@ def main(user, loglevel, version=False):
     try:
         config_path = riptide_main_config_file()
         system_config = Config.from_yaml(config_path)
+        # Remove the hooks from the base configuration, since there are (currently)
+        # no proxy hooks anyway, and this way we don't have to process them.
+        if system_config.internal_contains("hooks"):
+            system_config.internal_delete("hooks")
         system_config.validate()
         system_config.freeze()
     except FileNotFoundError as e:
         raise ClickException("Main config file not found. Run riptide config-edit-user.") from e
     except Exception as e:
-        raise ClickException("Error reading configuration.") from e
+        raise ClickException(f"Error reading configuration: {e}") from e
 
     # Read engine
     try:
